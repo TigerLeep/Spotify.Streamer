@@ -1,7 +1,6 @@
 package com.tigerbase.spotifystreamer;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,14 +8,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
 import java.util.List;
 
-import kaaes.spotify.webapi.android.models.Album;
 import kaaes.spotify.webapi.android.models.AlbumSimple;
-import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
-import kaaes.spotify.webapi.android.models.Tracks;
 
 public class ArtistTop10Adapter extends ArrayAdapter<Track>
 {
@@ -57,8 +55,7 @@ public class ArtistTop10Adapter extends ArrayAdapter<Track>
                 Image thumbnailImage = getThumbnailImage(track.album);
 
                 // Load the image from its Url into the ImageView
-                ImageLoaderTask task = new ImageLoaderTask(thumbnailImageView);
-                task.execute(thumbnailImage.url);
+                Picasso.with(getContext()).load(thumbnailImage.url).into(thumbnailImageView);
             }
 
             if (albumTextView != null && track.album != null)

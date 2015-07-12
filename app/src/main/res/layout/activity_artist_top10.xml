@@ -1,7 +1,7 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          android:id="@+id/activity_artist_top10"
-          android:name="com.tigerbase.spotifystreamer.ArtistTop10ActivityFragment"
-          tools:layout="@layout/fragment_artist_search"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"/>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/activity_artist_top10_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+</FrameLayout>

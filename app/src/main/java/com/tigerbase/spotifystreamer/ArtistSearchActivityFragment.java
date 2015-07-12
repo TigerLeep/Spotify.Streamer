@@ -1,8 +1,8 @@
 package com.tigerbase.spotifystreamer;
 
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.app.Fragment;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -12,18 +12,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import java.util.ArrayList;
-
-import kaaes.spotify.webapi.android.SpotifyApi;
-import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
-import kaaes.spotify.webapi.android.models.ArtistsPager;
-import kaaes.spotify.webapi.android.models.Track;
-import retrofit.Callback;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
 
 
 /**
@@ -52,7 +42,7 @@ public class ArtistSearchActivityFragment extends Fragment
         _adapter = new ArtistAdapter(
                 getActivity(),
                 R.layout.artist_list_item,
-                new ArrayList<Artist>());
+                new ArrayList<ArtistParcelable>());
 
         ListView listView = (ListView)rootView.findViewById(R.id.artist_search_list);
         listView.setAdapter(_adapter);
@@ -62,11 +52,11 @@ public class ArtistSearchActivityFragment extends Fragment
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
             {
-                Artist artist = _adapter.getItem(position);
+                ArtistParcelable artist = _adapter.getItem(position);
                 Intent intent = new Intent(getActivity(), ArtistTop10Activity.class);
                 Bundle extras = new Bundle();
-                extras.putString(getString(R.string.intent_extra_artist_id), artist.id);
-                extras.putString(getString(R.string.intent_extra_artist_name), artist.name);
+                extras.putString(getString(R.string.intent_extra_artist_id), artist.Id);
+                extras.putString(getString(R.string.intent_extra_artist_name), artist.Name);
                 intent.putExtras(extras);
                 startActivity(intent);
             }

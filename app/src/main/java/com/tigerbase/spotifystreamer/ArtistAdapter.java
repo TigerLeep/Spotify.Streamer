@@ -1,13 +1,6 @@
 package com.tigerbase.spotifystreamer;
 
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +8,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import kaaes.spotify.webapi.android.models.Artist;
-import kaaes.spotify.webapi.android.models.Image;
+import com.squareup.picasso.Picasso;
 
-public class ArtistAdapter extends ArrayAdapter<Artist>
+import java.util.ArrayList;
+
+public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
 {
     private final String LOG_TAG = ArtistAdapter.class.getSimpleName();
 
@@ -27,7 +21,7 @@ public class ArtistAdapter extends ArrayAdapter<Artist>
         super(context, textViewResourceId);
     }
 
-    public ArtistAdapter(Context context, int resource, List<Artist> artists)
+    public ArtistAdapter(Context context, int resource, ArrayList<ArtistParcelable> artists)
     {
         super(context, resource, artists);
     }
@@ -43,43 +37,32 @@ public class ArtistAdapter extends ArrayAdapter<Artist>
             view = inflater.inflate(R.layout.artist_list_item, parent, false);
         }
 
-        Artist artist = getItem(position);
+        ArtistParcelable artist = getItem(position);
 
         if (artist != null)
         {
             ImageView thumbnailImageView = (ImageView) view.findViewById(R.id.artist_list_item_thumbnail);
             TextView nameTextView = (TextView) view.findViewById(R.id.artist_list_item_name);
 
-            if (thumbnailImageView != null && !artist.images.isEmpty())
+            if (thumbnailImageView != null)
             {
-                // Find the image with the smallest width but not less than 200
-                Image thumbnailImage = getThumbnailImage(artist);
-
                 // Load the image from its Url into the ImageView
-                ImageLoaderTask task = new ImageLoaderTask(thumbnailImageView);
-                task.execute(thumbnailImage.url);
+                if (artist.ThumbnailImageUrl != null && !artist.ThumbnailImageUrl.isEmpty())
+                {
+                    Picasso.with(getContext()).load(artist.ThumbnailImageUrl).into(thumbnailImageView);
+                }
+                else
+                {
+                    thumbnailImageView.setImageBitmap(null);
+                }
             }
 
             if (nameTextView != null)
             {
-                nameTextView.setText(artist.name);
+                nameTextView.setText(artist.Name);
             }
         }
 
         return view;
-    }
-
-    private Image getThumbnailImage(Artist artist) {
-        Image thumbnailImage = null;
-        for (Image image : artist.images)
-        {
-            //Log.v(LOG_TAG, "Artist: '" + artist.name + "': " + Integer.toString(image.width));
-            if (thumbnailImage == null || image.width >= 200 && image.width < thumbnailImage.width)
-            {
-                thumbnailImage = image;
-                //Log.v(LOG_TAG, "Artist: '" + artist.name + "': " + Integer.toString(image.width) + " - Selected");
-            }
-        }
-        return thumbnailImage;
     }
 }

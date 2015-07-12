@@ -1,14 +1,12 @@
 package com.tigerbase.spotifystreamer;
 
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class ArtistSearchActivity extends ActionBarActivity
+public class ArtistSearchActivity extends AppCompatActivity
 {
 
     private final String ARTIST_SEARCH_FRAGMENT_TAG = ArtistSearchActivityFragment.class.getSimpleName();
@@ -20,30 +18,31 @@ public class ArtistSearchActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_search);
 
-        if (savedInstanceState == null)
+        _artistSearchActivityFragment =
+                (ArtistSearchActivityFragment)getFragmentManager()
+                        .findFragmentByTag(ARTIST_SEARCH_FRAGMENT_TAG);
+        if (_artistSearchActivityFragment == null)
         {
             _artistSearchActivityFragment = new ArtistSearchActivityFragment();
-            getFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.activity_artist_search_fragment,
-                             _artistSearchActivityFragment,
-                             ARTIST_SEARCH_FRAGMENT_TAG)
-                    .commit();
         }
-        else
-        {
-            _artistSearchActivityFragment =
-                    (ArtistSearchActivityFragment)getFragmentManager()
-                    .findFragmentByTag(ARTIST_SEARCH_FRAGMENT_TAG);
-        }
+        getFragmentManager()
+                .beginTransaction()
+                .replace(R.id.activity_artist_search_container,
+                        _artistSearchActivityFragment,
+                        ARTIST_SEARCH_FRAGMENT_TAG)
+                .commit();
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_artist_search, menu);
         return true;
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
 
     @Override

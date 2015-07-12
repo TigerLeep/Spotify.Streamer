@@ -1,24 +1,16 @@
 package com.tigerbase.spotifystreamer;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.ImageView;
 
-import org.apache.http.protocol.HTTP;
-
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
+import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
-import retrofit.Callback;
+import kaaes.spotify.webapi.android.models.Image;
 import retrofit.RetrofitError;
-import retrofit.client.Response;
 
 public class ArtistSearchTask extends AsyncTask<String, Void, ArtistsPager>
 {
@@ -94,10 +86,40 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArtistsPager>
     {
         if (artistsPager != null
                 && artistsPager.artists != null
-                && artistsPager.artists.items != null
                 && artistsPager.artists.total != 0)
         {
-            _artistAdapter.addAll(artistsPager.artists.items);
+            ArrayList<ArtistParcelable> artists = new ArrayList<>();
+            for (Artist artist : artistsPager.artists.items)
+            {
+                String id = artist.id;
+                String name = artist.name;
+                String thumbnailUrl = getThumbnailImageUrl(artist);
+
+                ArtistParcelable artistParcelable = new ArtistParcelable(id, name, thumbnailUrl);
+                artists.add(artistParcelable);
+            }
+
+            _artistAdapter.addAll(artists);
         }
     }
+
+    private String getThumbnailImageUrl(Artist artist) {
+        String thumbnailImageUrl = "";
+        Image thumbnailImage = null;
+        for (Image image : artist.images)
+        {
+            //Log.v(LOG_TAG, "Artist: '" + artist.name + "': " + Integer.toString(image.width));
+            if (thumbnailImage == null || image.width >= 200 && image.width < thumbnailImage.width)
+            {
+                thumbnailImage = image;
+                //Log.v(LOG_TAG, "Artist: '" + artist.name + "': " + Integer.toString(image.width) + " - Selected");
+            }
+        }
+        if (thumbnailImage != null && thumbnailImage.url != null)
+        {
+            thumbnailImageUrl = thumbnailImage.url;
+        }
+        return thumbnailImageUrl;
+    }
+
 }
