@@ -1,0 +1,24 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/artist_list_item"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    tools:context=".ArtistSearchActivityFragment">
+
+    <ImageView
+        android:id="@+id/artist_list_item_thumbnail"
+        android:layout_width="75dip"
+        android:layout_height="75dip"
+        android:padding="10dip"
+        />
+    <TextView
+        android:id="@+id/artist_list_item_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="5dip"
+        android:paddingRight="5dip"
+        />
+</LinearLayout>
