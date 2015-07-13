@@ -22,16 +22,17 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-
-/**
- * A placeholder fragment containing a simple view.
- */
 public class ArtistTop10ActivityFragment extends Fragment
 {
     private final String LOG_TAG = ArtistTop10Activity.class.getSimpleName();
-    private ArtistTop10Adapter _adapter = null;
+    private final String ARTIST_ID_STATE_TAG = "ArtistId";
+    private final String ARTIST_NAME_STATE_TAG = "ArtistName";
+    private final String TRACKS_STATE_TAG = "Tracks";
     private String _artistId = "";
     private String _artistName = "";
+    private ArrayList<TrackParcelable> _tracks = null;
+    private ArtistTop10Adapter _adapter = null;
+    private Boolean _loadedFromState = false;
 
     public ArtistTop10ActivityFragment()
     {
@@ -41,70 +42,105 @@ public class ArtistTop10ActivityFragment extends Fragment
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
+        //setRetainInstance(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState)
     {
-        Intent intent = getActivity().getIntent();
         View rootView = inflater.inflate(R.layout.fragment_artist_top10, container, false);
         _adapter = new ArtistTop10Adapter(
                 getActivity(),
                 R.layout.artist_top10_list_item,
-                new ArrayList<Track>());
+                new ArrayList<TrackParcelable>());
 
         ListView listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
         listView.setAdapter(_adapter);
 
-        if (intent != null)
+        if (savedInstanceState != null)
         {
-            Bundle extras = intent.getExtras();
-            if(extras != null)
+            _artistId = savedInstanceState.getString(ARTIST_ID_STATE_TAG);
+            _artistName = savedInstanceState.getString(ARTIST_NAME_STATE_TAG);
+            _tracks = savedInstanceState.getParcelableArrayList(TRACKS_STATE_TAG);
+            _loadedFromState = true;
+        }
+        else
+        {
+            Intent intent = getActivity().getIntent();
+            if (intent != null)
             {
-                _artistId = extras.getString(getString(R.string.intent_extra_artist_id));
-                _artistName = extras.getString(getString(R.string.intent_extra_artist_name));
-                ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-                if (actionBar != null)
+                Bundle extras = intent.getExtras();
+                if(extras != null)
                 {
-                    actionBar.setSubtitle(_artistName);
+                    _artistId = extras.getString(getString(R.string.intent_extra_artist_id));
+                    _artistName = extras.getString(getString(R.string.intent_extra_artist_name));
                 }
             }
-            LoadAlbums(_artistId);
+            _tracks = new ArrayList<>();
+            _loadedFromState = false;
         }
+
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if (actionBar != null)
+        {
+            actionBar.setSubtitle(_artistName);
+        }
+        LoadAlbums();
 
         return rootView;
     }
 
-    private void LoadAlbums(String artistId)
+    @Override
+    public void onSaveInstanceState(Bundle outState)
     {
+        super.onSaveInstanceState(outState);
+        outState.putString(ARTIST_ID_STATE_TAG, _artistId);
+        outState.putString(ARTIST_NAME_STATE_TAG, _artistName);
+        outState.putParcelableArrayList(TRACKS_STATE_TAG, _tracks);
+    }
 
-        _adapter.clear();
-        if(artistId.length() == 0)
+    private void LoadAlbums()
+    {
+        if(_artistId.length() == 0)
         {
             return;
         }
-        SpotifyApi api = new SpotifyApi();
-        SpotifyService spotify = api.getService();
-        Map<String, Object> options = new HashMap<>();
-        options.put("country", "US");
-        spotify.getArtistTopTrack(artistId, options, new Callback<Tracks>()
+
+        if(_loadedFromState)
         {
-            @Override
-            public void success(Tracks tracks, Response response) {
-                if (tracks != null
-                        && tracks.tracks != null
-                        && tracks.tracks.size() > 0)
-                {
-                    _adapter.addAll(tracks.tracks);
+            _adapter.clear();
+            _adapter.addAll(_tracks);
+        }
+        else
+        {
+            SpotifyApi api = new SpotifyApi();
+            SpotifyService spotify = api.getService();
+            Map<String, Object> options = new HashMap<>();
+            options.put("country", "US");
+            spotify.getArtistTopTrack(_artistId, options, new Callback<Tracks>()
+            {
+                @Override
+                public void success(Tracks tracks, Response response) {
+                    _adapter.clear();
+                    if (tracks != null
+                            && tracks.tracks != null
+                            && tracks.tracks.size() > 0)
+                    {
+                        _tracks.clear();
+                        for(Track track : tracks.tracks)
+                        {
+                            _tracks.add(new TrackParcelable(track));
+                        }
+                        _adapter.addAll(_tracks);
+                    }
                 }
-            }
 
-            @Override
-            public void failure(RetrofitError error) {
+                @Override
+                public void failure(RetrofitError error) {
 
-            }
-        });
+                }
+            });
+        }
     }
 }

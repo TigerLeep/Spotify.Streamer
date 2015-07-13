@@ -15,10 +15,6 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
-
-/**
- * A placeholder fragment containing a simple view.
- */
 public class ArtistSearchActivityFragment extends Fragment
 {
     private final String LOG_TAG = ArtistSearchActivity.class.getSimpleName();
@@ -38,17 +34,6 @@ public class ArtistSearchActivityFragment extends Fragment
     {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-
-        if (savedInstanceState != null)
-        {
-            _artistPartialName = savedInstanceState.getString(PARTIAL_NAME_STATE_TAG);
-            _artists = savedInstanceState.getParcelableArrayList(ARTISTS_STATE_TAG);
-        }
-        else
-        {
-            _artistPartialName = "";
-            _artists = new ArrayList<>();
-        }
     }
 
     @Override
@@ -98,6 +83,17 @@ public class ArtistSearchActivityFragment extends Fragment
                 SearchArtists(s.toString());
             }
         });
+
+        if (savedInstanceState != null)
+        {
+            _artistPartialName = savedInstanceState.getString(PARTIAL_NAME_STATE_TAG);
+            _artists = savedInstanceState.getParcelableArrayList(ARTISTS_STATE_TAG);
+        }
+        else
+        {
+            _artistPartialName = "";
+            _artists = new ArrayList<>();
+        }
 
         return rootView;
     }

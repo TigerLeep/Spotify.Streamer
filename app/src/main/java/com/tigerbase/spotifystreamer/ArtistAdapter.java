@@ -49,7 +49,9 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
                 // Load the image from its Url into the ImageView
                 if (artist.ThumbnailImageUrl != null && !artist.ThumbnailImageUrl.isEmpty())
                 {
-                    Picasso.with(getContext()).load(artist.ThumbnailImageUrl).into(thumbnailImageView);
+                    Picasso.with(getContext())
+                            .load(artist.ThumbnailImageUrl)
+                            .into(thumbnailImageView);
                 }
                 else
                 {
