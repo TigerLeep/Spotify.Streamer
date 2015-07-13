@@ -5,4 +5,6 @@
     <string name="intent_extra_artist_id">Artist_Id</string>
     <string name="intent_extra_artist_name">Artist_Name</string>
     <string name="artist_search_fragment_tag">ArtistSearchActivityFragment</string>
+    <string name="artists_state_tag">Artists</string>
+    <string name="parial_name_state_tag">PartialName</string>
 </resources>

@@ -3,6 +3,9 @@ package com.tigerbase.spotifystreamer;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import kaaes.spotify.webapi.android.models.Artist;
+import kaaes.spotify.webapi.android.models.Image;
+
 /**
  * Created by Leep on 7/12/2015.
  * I implemented Parcelable here with the assumption it was needed, but I'm sure it was.  I'm
@@ -28,8 +31,16 @@ public class ArtistParcelable implements Parcelable
         ThumbnailImageUrl = thumbnailImageUrl;
     }
 
+    public ArtistParcelable(Artist artist)
+    {
+        Id = artist.id;
+        Name = artist.name;
+        ThumbnailImageUrl = getThumbnailImageUrl(artist);
+    }
+
     @Override
-    public int describeContents() {
+    public int describeContents()
+    {
         return 0;
     }
 
@@ -58,5 +69,23 @@ public class ArtistParcelable implements Parcelable
         dest.writeString(Id);
         dest.writeString(Name);
         dest.writeString(ThumbnailImageUrl);
+    }
+
+    private String getThumbnailImageUrl(Artist artist)
+    {
+        String thumbnailImageUrl = "";
+        Image thumbnailImage = null;
+        for (Image image : artist.images)
+        {
+            if (thumbnailImage == null || image.width >= 200 && image.width < thumbnailImage.width)
+            {
+                thumbnailImage = image;
+            }
+        }
+        if (thumbnailImage != null && thumbnailImage.url != null)
+        {
+            thumbnailImageUrl = thumbnailImage.url;
+        }
+        return thumbnailImageUrl;
     }
 }

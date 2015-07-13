@@ -12,17 +12,19 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Image;
 import retrofit.RetrofitError;
 
-public class ArtistSearchTask extends AsyncTask<String, Void, ArtistsPager>
+public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistParcelable>>
 {
     private final String LOG_TAG = ArtistSearchTask.class.getSimpleName();
-    private ArtistAdapter _artistAdapter;
+    private ArrayList<ArtistParcelable> _artists = null;
+    private ArtistAdapter _adapter;
 
-    public ArtistSearchTask(ArtistAdapter artistAdapter)
+    public ArtistSearchTask(ArrayList<ArtistParcelable> artists, ArtistAdapter adapter)
     {
-        _artistAdapter = artistAdapter;
+        _artists = artists;
+        _adapter = adapter;
     }
 
-    protected ArtistsPager doInBackground(String... params)
+    protected ArrayList<ArtistParcelable> doInBackground(String... params)
     {
         if (params.length != 1)
         {
@@ -77,49 +79,25 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArtistsPager>
             Log.e(LOG_TAG, ex.getMessage());
         }
 
-        // Return the list of artists
-        return artistsPager;
+        ArrayList<ArtistParcelable> artists = new ArrayList<>();
+        if (artistsPager != null)
+        {
+            for(Artist artist : artistsPager.artists.items)
+            {
+                artists.add(new ArtistParcelable(artist));
+            }
+        }
+
+        return artists;
     }
 
     @Override
-    protected void onPostExecute(ArtistsPager artistsPager)
+    protected void onPostExecute(ArrayList<ArtistParcelable> artists)
     {
-        if (artistsPager != null
-                && artistsPager.artists != null
-                && artistsPager.artists.total != 0)
-        {
-            ArrayList<ArtistParcelable> artists = new ArrayList<>();
-            for (Artist artist : artistsPager.artists.items)
-            {
-                String id = artist.id;
-                String name = artist.name;
-                String thumbnailUrl = getThumbnailImageUrl(artist);
+        _artists.clear();
+        _adapter.clear();
 
-                ArtistParcelable artistParcelable = new ArtistParcelable(id, name, thumbnailUrl);
-                artists.add(artistParcelable);
-            }
-
-            _artistAdapter.addAll(artists);
-        }
+        _artists.addAll(artists);
+        _adapter.addAll(artists);
     }
-
-    private String getThumbnailImageUrl(Artist artist) {
-        String thumbnailImageUrl = "";
-        Image thumbnailImage = null;
-        for (Image image : artist.images)
-        {
-            //Log.v(LOG_TAG, "Artist: '" + artist.name + "': " + Integer.toString(image.width));
-            if (thumbnailImage == null || image.width >= 200 && image.width < thumbnailImage.width)
-            {
-                thumbnailImage = image;
-                //Log.v(LOG_TAG, "Artist: '" + artist.name + "': " + Integer.toString(image.width) + " - Selected");
-            }
-        }
-        if (thumbnailImage != null && thumbnailImage.url != null)
-        {
-            thumbnailImageUrl = thumbnailImage.url;
-        }
-        return thumbnailImageUrl;
-    }
-
 }

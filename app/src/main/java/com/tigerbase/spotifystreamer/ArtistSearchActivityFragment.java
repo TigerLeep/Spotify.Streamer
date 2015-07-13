@@ -22,16 +22,33 @@ import java.util.ArrayList;
 public class ArtistSearchActivityFragment extends Fragment
 {
     private final String LOG_TAG = ArtistSearchActivity.class.getSimpleName();
+    private final String ARTISTS_STATE_TAG = "Artists";
+    private final String PARTIAL_NAME_STATE_TAG = "PartialName";
+    private String _artistPartialName = "";
+    private ArrayList<ArtistParcelable> _artists = null;
     private ArtistAdapter _adapter = null;
     private ArtistSearchTask _artistSearchTask = null;
 
-    public ArtistSearchActivityFragment() {
+    public ArtistSearchActivityFragment()
+    {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+
+        if (savedInstanceState != null)
+        {
+            _artistPartialName = savedInstanceState.getString(PARTIAL_NAME_STATE_TAG);
+            _artists = savedInstanceState.getParcelableArrayList(ARTISTS_STATE_TAG);
+        }
+        else
+        {
+            _artistPartialName = "";
+            _artists = new ArrayList<>();
+        }
     }
 
     @Override
@@ -85,18 +102,35 @@ public class ArtistSearchActivityFragment extends Fragment
         return rootView;
     }
 
-    private void SearchArtists(String artistPartialName) {
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        outState.putString(PARTIAL_NAME_STATE_TAG, _artistPartialName);
+        outState.putParcelableArrayList(ARTISTS_STATE_TAG, _artists);
+    }
 
+    private void SearchArtists(String artistPartialName)
+    {
         if(_artistSearchTask != null && _artistSearchTask.getStatus() != AsyncTask.Status.FINISHED)
         {
             _artistSearchTask.cancel(true);
         }
-        _adapter.clear();
+
         if(artistPartialName.length() == 0)
         {
             return;
         }
-        _artistSearchTask = new ArtistSearchTask(_adapter);
-        _artistSearchTask.execute(artistPartialName);
+        if (artistPartialName.equals(_artistPartialName))
+        {
+            _adapter.clear();
+            _adapter.addAll(_artists);
+        }
+        else
+        {
+            _artistPartialName = artistPartialName;
+            _artistSearchTask = new ArtistSearchTask(_artists, _adapter);
+            _artistSearchTask.execute(artistPartialName);
+        }
     }
 }

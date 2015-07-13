@@ -71,7 +71,8 @@ public class ArtistTop10Adapter extends ArrayAdapter<Track>
         return view;
     }
 
-    private Image getThumbnailImage(AlbumSimple album) {
+    private Image getThumbnailImage(AlbumSimple album)
+    {
         Image thumbnailImage = null;
         for (Image image : album.images)
         {
