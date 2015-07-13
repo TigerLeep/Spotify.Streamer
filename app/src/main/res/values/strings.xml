@@ -6,5 +6,7 @@
     <string name="intent_extra_artist_name">Artist_Name</string>
     <string name="artist_search_fragment_tag">ArtistSearchActivityFragment</string>
     <string name="artists_state_tag">Artists</string>
-    <string name="parial_name_state_tag">PartialName</string>
+    <string name="partial_name_state_tag">PartialName</string>
+    <string name="no_artists_found">No artists were found.  Please adjust your search.</string>
+    <string name="no_tracks_found">No tracks were found.  Please select a different artist.</string>
 </resources>

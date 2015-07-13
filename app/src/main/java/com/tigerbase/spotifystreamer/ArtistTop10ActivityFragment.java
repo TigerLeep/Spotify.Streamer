@@ -3,12 +3,14 @@ package com.tigerbase.spotifystreamer;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,11 +30,14 @@ public class ArtistTop10ActivityFragment extends Fragment
     private final String ARTIST_ID_STATE_TAG = "ArtistId";
     private final String ARTIST_NAME_STATE_TAG = "ArtistName";
     private final String TRACKS_STATE_TAG = "Tracks";
+    private final String LIST_VIEW_STATE_TAG = "ListView";
     private String _artistId = "";
     private String _artistName = "";
     private ArrayList<TrackParcelable> _tracks = null;
     private ArtistTop10Adapter _adapter = null;
     private Boolean _loadedFromState = false;
+    private ListView _listView = null;
+    private Parcelable _listState = null;
 
     public ArtistTop10ActivityFragment()
     {
@@ -55,14 +60,15 @@ public class ArtistTop10ActivityFragment extends Fragment
                 R.layout.artist_top10_list_item,
                 new ArrayList<TrackParcelable>());
 
-        ListView listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
-        listView.setAdapter(_adapter);
+        _listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
+        _listView.setAdapter(_adapter);
 
         if (savedInstanceState != null)
         {
             _artistId = savedInstanceState.getString(ARTIST_ID_STATE_TAG);
             _artistName = savedInstanceState.getString(ARTIST_NAME_STATE_TAG);
             _tracks = savedInstanceState.getParcelableArrayList(TRACKS_STATE_TAG);
+            _listState = savedInstanceState.getParcelable(LIST_VIEW_STATE_TAG);
             _loadedFromState = true;
         }
         else
@@ -98,6 +104,7 @@ public class ArtistTop10ActivityFragment extends Fragment
         outState.putString(ARTIST_ID_STATE_TAG, _artistId);
         outState.putString(ARTIST_NAME_STATE_TAG, _artistName);
         outState.putParcelableArrayList(TRACKS_STATE_TAG, _tracks);
+        outState.putParcelable(LIST_VIEW_STATE_TAG, _listView.onSaveInstanceState());
     }
 
     private void LoadAlbums()
@@ -111,6 +118,9 @@ public class ArtistTop10ActivityFragment extends Fragment
         {
             _adapter.clear();
             _adapter.addAll(_tracks);
+            _listView.onRestoreInstanceState(_listState);
+            CheckTracksForEmpty();
+            _loadedFromState = false;
         }
         else
         {
@@ -133,6 +143,7 @@ public class ArtistTop10ActivityFragment extends Fragment
                             _tracks.add(new TrackParcelable(track));
                         }
                         _adapter.addAll(_tracks);
+                        CheckTracksForEmpty();
                     }
                 }
 
@@ -141,6 +152,15 @@ public class ArtistTop10ActivityFragment extends Fragment
 
                 }
             });
+        }
+    }
+
+    private void CheckTracksForEmpty()
+    {
+        if (_tracks == null || _tracks.isEmpty())
+        {
+            String message = getActivity().getString(R.string.no_tracks_found);
+            Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
         }
     }
 }

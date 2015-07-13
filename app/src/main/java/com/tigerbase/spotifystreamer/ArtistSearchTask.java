@@ -1,7 +1,9 @@
 package com.tigerbase.spotifystreamer;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -9,7 +11,6 @@ import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
-import kaaes.spotify.webapi.android.models.Image;
 import retrofit.RetrofitError;
 
 public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistParcelable>>
@@ -17,11 +18,16 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
     private final String LOG_TAG = ArtistSearchTask.class.getSimpleName();
     private ArrayList<ArtistParcelable> _artists = null;
     private ArtistAdapter _adapter;
+    private Context _context;
 
-    public ArtistSearchTask(ArrayList<ArtistParcelable> artists, ArtistAdapter adapter)
+    public ArtistSearchTask(ArrayList<ArtistParcelable> artists,
+                            ArtistAdapter adapter,
+                            Context context
+                            )
     {
         _artists = artists;
         _adapter = adapter;
+        _context = context;
     }
 
     protected ArrayList<ArtistParcelable> doInBackground(String... params)
@@ -38,16 +44,6 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
 
         // Add an * to the end of each word to make it a "Starts With" wild card search.
         String artistPartialName = params[0].replace(" ", "* ") + "*";
-        //try
-        //{
-        //    artistPartialName = URLEncoder.encode(artistPartialName, HTTP.UTF_8);
-        //}
-        //catch (UnsupportedEncodingException ex)
-        //{
-        //    // I'm pretty sure UTF_8 will always be a supported encoding and this catch
-        //    // will never be hit.  But if it is, we'll just have the un-encoded string.
-        //}
-        Log.v(LOG_TAG, artistPartialName);
 
         // Pause for a short time to ensure we don't rapid-fire API calls to Spotify.
         try
@@ -99,5 +95,11 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
 
         _artists.addAll(artists);
         _adapter.addAll(artists);
+
+        if (artists == null || artists.isEmpty())
+        {
+            String message = _context.getString(R.string.no_artists_found);
+            Toast.makeText(_context, message, Toast.LENGTH_LONG).show();
+        }
     }
 }

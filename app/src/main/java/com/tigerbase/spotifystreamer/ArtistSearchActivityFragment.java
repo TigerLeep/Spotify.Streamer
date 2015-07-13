@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -20,10 +21,14 @@ public class ArtistSearchActivityFragment extends Fragment
     private final String LOG_TAG = ArtistSearchActivity.class.getSimpleName();
     private final String ARTISTS_STATE_TAG = "Artists";
     private final String PARTIAL_NAME_STATE_TAG = "PartialName";
+    private final String LIST_VIEW_STATE_TAG = "ListView";
     private String _artistPartialName = "";
     private ArrayList<ArtistParcelable> _artists = null;
     private ArtistAdapter _adapter = null;
     private ArtistSearchTask _artistSearchTask = null;
+    private Boolean _loadedFromState = false;
+    private ListView _listView = null;
+    private Parcelable _listState = null;
 
     public ArtistSearchActivityFragment()
     {
@@ -33,7 +38,7 @@ public class ArtistSearchActivityFragment extends Fragment
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
+        //setRetainInstance(true);
     }
 
     @Override
@@ -46,10 +51,10 @@ public class ArtistSearchActivityFragment extends Fragment
                 R.layout.artist_list_item,
                 new ArrayList<ArtistParcelable>());
 
-        ListView listView = (ListView)rootView.findViewById(R.id.artist_search_list);
-        listView.setAdapter(_adapter);
+        _listView = (ListView)rootView.findViewById(R.id.artist_search_list);
+        _listView.setAdapter(_adapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
@@ -88,11 +93,14 @@ public class ArtistSearchActivityFragment extends Fragment
         {
             _artistPartialName = savedInstanceState.getString(PARTIAL_NAME_STATE_TAG);
             _artists = savedInstanceState.getParcelableArrayList(ARTISTS_STATE_TAG);
+            _listState = savedInstanceState.getParcelable(LIST_VIEW_STATE_TAG);
+            _loadedFromState = true;
         }
         else
         {
             _artistPartialName = "";
             _artists = new ArrayList<>();
+            _loadedFromState = false;
         }
 
         return rootView;
@@ -104,6 +112,7 @@ public class ArtistSearchActivityFragment extends Fragment
         super.onSaveInstanceState(outState);
         outState.putString(PARTIAL_NAME_STATE_TAG, _artistPartialName);
         outState.putParcelableArrayList(ARTISTS_STATE_TAG, _artists);
+        outState.putParcelable(LIST_VIEW_STATE_TAG, _listView.onSaveInstanceState());
     }
 
     private void SearchArtists(String artistPartialName)
@@ -117,15 +126,17 @@ public class ArtistSearchActivityFragment extends Fragment
         {
             return;
         }
-        if (artistPartialName.equals(_artistPartialName))
+        if (_loadedFromState)
         {
             _adapter.clear();
             _adapter.addAll(_artists);
+            _listView.onRestoreInstanceState(_listState);
+            _loadedFromState = false;
         }
         else
         {
             _artistPartialName = artistPartialName;
-            _artistSearchTask = new ArtistSearchTask(_artists, _adapter);
+            _artistSearchTask = new ArtistSearchTask(_artists, _adapter, getActivity());
             _artistSearchTask.execute(artistPartialName);
         }
     }
