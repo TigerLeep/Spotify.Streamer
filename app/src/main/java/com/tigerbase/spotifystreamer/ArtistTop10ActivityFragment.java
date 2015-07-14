@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -131,25 +132,27 @@ public class ArtistTop10ActivityFragment extends Fragment
             spotify.getArtistTopTrack(_artistId, options, new Callback<Tracks>()
             {
                 @Override
-                public void success(Tracks tracks, Response response) {
+                public void success(Tracks tracks, Response response)
+                {
                     _adapter.clear();
+                    _tracks.clear();
                     if (tracks != null
                             && tracks.tracks != null
                             && tracks.tracks.size() > 0)
                     {
-                        _tracks.clear();
                         for(Track track : tracks.tracks)
                         {
                             _tracks.add(new TrackParcelable(track));
                         }
                         _adapter.addAll(_tracks);
-                        CheckTracksForEmpty();
                     }
+                    CheckTracksForEmpty();
                 }
 
                 @Override
-                public void failure(RetrofitError error) {
-
+                public void failure(RetrofitError ex)
+                {
+                    Log.e(LOG_TAG, ex.getMessage());
                 }
             });
         }
