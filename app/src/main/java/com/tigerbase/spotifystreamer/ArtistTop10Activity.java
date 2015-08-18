@@ -2,13 +2,14 @@ package com.tigerbase.spotifystreamer;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 
 public class ArtistTop10Activity extends AppCompatActivity
 {
-
+    private final String LOG_TAG = ArtistTop10Activity.class.getName();
     private final String ARTIST_TOP10_FRAGMENT_TAG = ArtistTop10ActivityFragment.class.getSimpleName();
 
     private ArtistTop10ActivityFragment _artistTop10ActivityFragment;
@@ -16,6 +17,7 @@ public class ArtistTop10Activity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        Log.v(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_top10);
 
@@ -37,6 +39,7 @@ public class ArtistTop10Activity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
+        Log.v(LOG_TAG, "onCreateOptionsMenu");
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_artist_top10, menu);
         return true;
@@ -45,12 +48,14 @@ public class ArtistTop10Activity extends AppCompatActivity
     @Override
     protected void onSaveInstanceState(Bundle outState)
     {
+        Log.v(LOG_TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
+        Log.v(LOG_TAG, "onOptionsItemSelected");
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.

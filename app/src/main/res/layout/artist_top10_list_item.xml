@@ -12,6 +12,7 @@
         android:layout_width="75dip"
         android:layout_height="75dip"
         android:padding="10dip"
+        android:src="@mipmap/ic_launcher"
         />
     <LinearLayout
         android:layout_width="fill_parent"
@@ -25,12 +26,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
+            android:text="Katy Perry - Teenage Dream: The Complete Confection"
             />
         <TextView
             android:id="@+id/artist_top10_list_item_track"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
+            android:text="Firework"
             />
 
     </LinearLayout>

@@ -27,7 +27,8 @@ import retrofit.client.Response;
 
 public class ArtistTop10ActivityFragment extends Fragment
 {
-    private final String LOG_TAG = ArtistTop10Activity.class.getSimpleName();
+    private final static String LOG_TAG = ArtistTop10ActivityFragment.class.getSimpleName();
+
     private final String ARTIST_ID_STATE_TAG = "ArtistId";
     private final String ARTIST_NAME_STATE_TAG = "ArtistName";
     private final String TRACKS_STATE_TAG = "Tracks";
@@ -47,6 +48,7 @@ public class ArtistTop10ActivityFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        Log.v(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         //setRetainInstance(true);
     }
@@ -55,6 +57,7 @@ public class ArtistTop10ActivityFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState)
     {
+        Log.v(LOG_TAG, "onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_artist_top10, container, false);
         _adapter = new ArtistTop10Adapter(
                 getActivity(),
@@ -93,7 +96,7 @@ public class ArtistTop10ActivityFragment extends Fragment
         {
             actionBar.setSubtitle(_artistName);
         }
-        LoadAlbums();
+        loadAlbums();
 
         return rootView;
     }
@@ -101,6 +104,7 @@ public class ArtistTop10ActivityFragment extends Fragment
     @Override
     public void onSaveInstanceState(Bundle outState)
     {
+        Log.v(LOG_TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
         outState.putString(ARTIST_ID_STATE_TAG, _artistId);
         outState.putString(ARTIST_NAME_STATE_TAG, _artistName);
@@ -108,8 +112,9 @@ public class ArtistTop10ActivityFragment extends Fragment
         outState.putParcelable(LIST_VIEW_STATE_TAG, _listView.onSaveInstanceState());
     }
 
-    private void LoadAlbums()
+    private void loadAlbums()
     {
+        Log.v(LOG_TAG, "loadAlbums");
         if(_artistId.length() == 0)
         {
             return;
@@ -120,7 +125,7 @@ public class ArtistTop10ActivityFragment extends Fragment
             _adapter.clear();
             _adapter.addAll(_tracks);
             _listView.onRestoreInstanceState(_listState);
-            CheckTracksForEmpty();
+            checkTracksForEmpty();
             _loadedFromState = false;
         }
         else
@@ -146,7 +151,7 @@ public class ArtistTop10ActivityFragment extends Fragment
                         }
                         _adapter.addAll(_tracks);
                     }
-                    CheckTracksForEmpty();
+                    checkTracksForEmpty();
                 }
 
                 @Override
@@ -158,8 +163,9 @@ public class ArtistTop10ActivityFragment extends Fragment
         }
     }
 
-    private void CheckTracksForEmpty()
+    private void checkTracksForEmpty()
     {
+        Log.v(LOG_TAG, "checkTracksForEmpty");
         if (_tracks == null || _tracks.isEmpty())
         {
             String message = getActivity().getString(R.string.no_tracks_found);

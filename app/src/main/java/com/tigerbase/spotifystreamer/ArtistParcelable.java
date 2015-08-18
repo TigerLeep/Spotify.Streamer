@@ -2,12 +2,15 @@ package com.tigerbase.spotifystreamer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.Image;
 
 public class ArtistParcelable implements Parcelable
 {
+    private final static String LOG_TAG = ArtistParcelable.class.getSimpleName();
+
     public String Id = "";
     public String Name = "";
     public String ThumbnailImageUrl = "";
@@ -33,6 +36,7 @@ public class ArtistParcelable implements Parcelable
     @Override
     public int describeContents()
     {
+        Log.v(LOG_TAG, "describeContents");
         return 0;
     }
 
@@ -41,6 +45,7 @@ public class ArtistParcelable implements Parcelable
             {
                 public ArtistParcelable createFromParcel(Parcel in)
                 {
+                    Log.v(LOG_TAG, "CREATOR.createFromParcel");
                     ArtistParcelable artist = new ArtistParcelable();
                     artist.Id = in.readString();
                     artist.Name = in.readString();
@@ -51,6 +56,7 @@ public class ArtistParcelable implements Parcelable
                 @Override
                 public ArtistParcelable[] newArray(int size)
                 {
+                    Log.v(LOG_TAG, "CREATOR.newArray");
                     return new ArtistParcelable[size];
                 }
             };
@@ -58,6 +64,7 @@ public class ArtistParcelable implements Parcelable
     @Override
     public void writeToParcel(Parcel dest, int flags)
     {
+        Log.v(LOG_TAG, "writeToParcel");
         dest.writeString(Id);
         dest.writeString(Name);
         dest.writeString(ThumbnailImageUrl);
@@ -65,6 +72,7 @@ public class ArtistParcelable implements Parcelable
 
     private String getThumbnailImageUrl(Artist artist)
     {
+        Log.v(LOG_TAG, "getThumbnailImageUrl");
         String thumbnailImageUrl = "";
         Image thumbnailImage = null;
         for (Image image : artist.images)

@@ -1,6 +1,7 @@
 package com.tigerbase.spotifystreamer;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
     @Override
     public View getView(int position, View convertView, ViewGroup parent)
     {
+        Log.v(LOG_TAG, "getView");
         View view = convertView;
 
         if (view == null)

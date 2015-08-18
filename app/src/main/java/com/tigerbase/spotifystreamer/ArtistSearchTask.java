@@ -15,7 +15,8 @@ import retrofit.RetrofitError;
 
 public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistParcelable>>
 {
-    private final String LOG_TAG = ArtistSearchTask.class.getSimpleName();
+    private final static String LOG_TAG = ArtistSearchTask.class.getSimpleName();
+
     private ArrayList<ArtistParcelable> _artists = null;
     private ArtistAdapter _adapter;
     private Context _context;
@@ -32,6 +33,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
 
     protected ArrayList<ArtistParcelable> doInBackground(String... params)
     {
+        Log.v(LOG_TAG, "doInBackground");
         if (params.length != 1)
         {
             Log.e(LOG_TAG, "Invalid parameters passed to ArtistSearchTask.doInBackground");
@@ -90,6 +92,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
     @Override
     protected void onPostExecute(ArrayList<ArtistParcelable> artists)
     {
+        Log.v(LOG_TAG, "onPostExecute");
         _artists.clear();
         _adapter.clear();
 

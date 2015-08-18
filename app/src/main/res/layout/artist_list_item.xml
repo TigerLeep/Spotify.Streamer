@@ -13,6 +13,7 @@
         android:layout_width="75dip"
         android:layout_height="75dip"
         android:padding="10dip"
+        android:src="@mipmap/ic_launcher"
         />
     <TextView
         android:id="@+id/artist_list_item_name"
@@ -20,5 +21,6 @@
         android:layout_height="wrap_content"
         android:paddingLeft="5dip"
         android:paddingRight="5dip"
+        android:text="Katy Perry"
         />
 </LinearLayout>

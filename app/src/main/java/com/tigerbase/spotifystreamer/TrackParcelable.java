@@ -2,6 +2,7 @@ package com.tigerbase.spotifystreamer;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import kaaes.spotify.webapi.android.models.AlbumSimple;
 import kaaes.spotify.webapi.android.models.Image;
@@ -9,6 +10,8 @@ import kaaes.spotify.webapi.android.models.Track;
 
 public class TrackParcelable implements Parcelable
 {
+    private final static String LOG_TAG = TrackParcelable.class.getSimpleName();
+
     public String Id = "";
     public String Name = "";
     public String ThumbnailImageUrl = "";
@@ -40,6 +43,7 @@ public class TrackParcelable implements Parcelable
     @Override
     public int describeContents()
     {
+        Log.v(LOG_TAG, "describeContents");
         return 0;
     }
 
@@ -48,6 +52,7 @@ public class TrackParcelable implements Parcelable
             {
                 public TrackParcelable createFromParcel(Parcel in)
                 {
+                    Log.v(LOG_TAG, "CREATOR.createFromParcel");
                     TrackParcelable track = new TrackParcelable();
                     track.Id = in.readString();
                     track.Name = in.readString();
@@ -59,6 +64,7 @@ public class TrackParcelable implements Parcelable
                 @Override
                 public TrackParcelable[] newArray(int size)
                 {
+                    Log.v(LOG_TAG, "CREATOR.newArray");
                     return new TrackParcelable[size];
                 }
             };
@@ -66,6 +72,7 @@ public class TrackParcelable implements Parcelable
     @Override
     public void writeToParcel(Parcel dest, int flags)
     {
+        Log.v(LOG_TAG, "writeToParcel");
         dest.writeString(Id);
         dest.writeString(Name);
         dest.writeString(ThumbnailImageUrl);
@@ -74,6 +81,7 @@ public class TrackParcelable implements Parcelable
 
     private String getThumbnailImageUrl(AlbumSimple album)
     {
+        Log.v(LOG_TAG, "getThumbnailImageUrl");
         String thumbnailImageUrl = "";
         Image thumbnailImage = null;
         for (Image image : album.images)

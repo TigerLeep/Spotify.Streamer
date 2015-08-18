@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +19,8 @@ import java.util.ArrayList;
 
 public class ArtistSearchActivityFragment extends Fragment
 {
-    private final String LOG_TAG = ArtistSearchActivity.class.getSimpleName();
+    private final static String LOG_TAG = ArtistSearchActivityFragment.class.getSimpleName();
+
     private final String ARTISTS_STATE_TAG = "Artists";
     private final String PARTIAL_NAME_STATE_TAG = "PartialName";
     private final String LIST_VIEW_STATE_TAG = "ListView";
@@ -37,6 +39,7 @@ public class ArtistSearchActivityFragment extends Fragment
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        Log.v(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         //setRetainInstance(true);
     }
@@ -45,6 +48,7 @@ public class ArtistSearchActivityFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState)
     {
+        Log.v(LOG_TAG, "onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
         _adapter = new ArtistAdapter(
                 getActivity(),
@@ -85,6 +89,7 @@ public class ArtistSearchActivityFragment extends Fragment
             @Override
             public void afterTextChanged(Editable s)
             {
+                Log.v(LOG_TAG, "afterTextChanged");
                 SearchArtists(s.toString());
             }
         });
@@ -109,6 +114,7 @@ public class ArtistSearchActivityFragment extends Fragment
     @Override
     public void onSaveInstanceState(Bundle outState)
     {
+        Log.v(LOG_TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
         outState.putString(PARTIAL_NAME_STATE_TAG, _artistPartialName);
         outState.putParcelableArrayList(ARTISTS_STATE_TAG, _artists);
@@ -117,6 +123,7 @@ public class ArtistSearchActivityFragment extends Fragment
 
     private void SearchArtists(String artistPartialName)
     {
+        Log.v(LOG_TAG, "SearchArtists");
         if(_artistSearchTask != null && _artistSearchTask.getStatus() != AsyncTask.Status.FINISHED)
         {
             _artistSearchTask.cancel(true);
