@@ -1,6 +1,6 @@
 package com.tigerbase.spotifystreamer;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -25,9 +25,9 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class ArtistTop10ActivityFragment extends Fragment
+public class ArtistTop10Fragment extends Fragment
 {
-    private final static String LOG_TAG = ArtistTop10ActivityFragment.class.getSimpleName();
+    private final static String LOG_TAG = ArtistTop10Fragment.class.getSimpleName();
 
     private final String ARTIST_ID_STATE_TAG = "ArtistId";
     private final String ARTIST_NAME_STATE_TAG = "ArtistName";
@@ -41,7 +41,7 @@ public class ArtistTop10ActivityFragment extends Fragment
     private ListView _listView = null;
     private Parcelable _listState = null;
 
-    public ArtistTop10ActivityFragment()
+    public ArtistTop10Fragment()
     {
     }
 
@@ -61,7 +61,7 @@ public class ArtistTop10ActivityFragment extends Fragment
         View rootView = inflater.inflate(R.layout.fragment_artist_top10, container, false);
         _adapter = new ArtistTop10Adapter(
                 getActivity(),
-                R.layout.artist_top10_list_item,
+                R.layout.list_item_artist_top10,
                 new ArrayList<TrackParcelable>());
 
         _listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
@@ -171,5 +171,13 @@ public class ArtistTop10ActivityFragment extends Fragment
             String message = getActivity().getString(R.string.no_tracks_found);
             Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
         }
+    }
+
+    public void onArtistChange(String id, String name)
+    {
+        Log.v(LOG_TAG, "onArtistChange");
+        _artistId = id;
+        _artistName = name;
+        loadAlbums();
     }
 }

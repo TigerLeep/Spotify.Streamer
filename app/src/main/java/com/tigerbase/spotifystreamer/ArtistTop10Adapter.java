@@ -36,7 +36,7 @@ public class ArtistTop10Adapter extends ArrayAdapter<TrackParcelable>
         if (view == null)
         {
             LayoutInflater inflater = LayoutInflater.from(getContext());
-            view = inflater.inflate(R.layout.artist_top10_list_item, parent, false);
+            view = inflater.inflate(R.layout.list_item_artist_top10, parent, false);
         }
 
         TrackParcelable track = getItem(position);

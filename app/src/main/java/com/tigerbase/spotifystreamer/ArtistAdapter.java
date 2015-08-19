@@ -36,15 +36,15 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
         if (view == null)
         {
             LayoutInflater inflater = LayoutInflater.from(getContext());
-            view = inflater.inflate(R.layout.artist_list_item, parent, false);
+            view = inflater.inflate(R.layout.list_item_artist, parent, false);
         }
 
         ArtistParcelable artist = getItem(position);
 
         if (artist != null)
         {
-            ImageView thumbnailImageView = (ImageView) view.findViewById(R.id.artist_list_item_thumbnail);
-            TextView nameTextView = (TextView) view.findViewById(R.id.artist_list_item_name);
+            ImageView thumbnailImageView = (ImageView) view.findViewById(R.id.list_item_artist_thumbnail);
+            TextView nameTextView = (TextView) view.findViewById(R.id.list_item_artist_name);
 
             if (thumbnailImageView != null)
             {

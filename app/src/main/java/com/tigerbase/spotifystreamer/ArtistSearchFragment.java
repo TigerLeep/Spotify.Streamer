@@ -1,6 +1,6 @@
 package com.tigerbase.spotifystreamer;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -17,9 +17,9 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
-public class ArtistSearchActivityFragment extends Fragment
+public class ArtistSearchFragment extends Fragment
 {
-    private final static String LOG_TAG = ArtistSearchActivityFragment.class.getSimpleName();
+    private final static String LOG_TAG = ArtistSearchFragment.class.getSimpleName();
 
     private final String ARTISTS_STATE_TAG = "Artists";
     private final String PARTIAL_NAME_STATE_TAG = "PartialName";
@@ -32,7 +32,7 @@ public class ArtistSearchActivityFragment extends Fragment
     private ListView _listView = null;
     private Parcelable _listState = null;
 
-    public ArtistSearchActivityFragment()
+    public ArtistSearchFragment()
     {
     }
 
@@ -52,7 +52,7 @@ public class ArtistSearchActivityFragment extends Fragment
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
         _adapter = new ArtistAdapter(
                 getActivity(),
-                R.layout.artist_list_item,
+                R.layout.list_item_artist,
                 new ArrayList<ArtistParcelable>());
 
         _listView = (ListView)rootView.findViewById(R.id.artist_search_list);
@@ -64,12 +64,10 @@ public class ArtistSearchActivityFragment extends Fragment
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
             {
                 ArtistParcelable artist = _adapter.getItem(position);
-                Intent intent = new Intent(getActivity(), ArtistTop10Activity.class);
-                Bundle extras = new Bundle();
-                extras.putString(getString(R.string.intent_extra_artist_id), artist.Id);
-                extras.putString(getString(R.string.intent_extra_artist_name), artist.Name);
-                intent.putExtras(extras);
-                startActivity(intent);
+                if (getActivity() instanceof IArtistList) {
+                    Log.v(LOG_TAG, "instanceof IArtistList");
+                    ((IArtistList) getActivity()).onArtistSelected(artist.Id, artist.Name);
+                }
             }
         });
 

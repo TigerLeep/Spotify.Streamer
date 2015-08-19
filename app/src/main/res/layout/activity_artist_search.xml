@@ -1,7 +1,11 @@
-<FrameLayout
+<fragment
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/activity_artist_search_container"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/forecast_artist_search"
+    android:name="com.tigerbase.spotifystreamer.ArtistSearchFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    tools:context="com.tigerbase.spotifystreamer.ArtistSearchFragment"
+    tools:layout="@android:layout/list_content"
     >
-</FrameLayout>
+</fragment>

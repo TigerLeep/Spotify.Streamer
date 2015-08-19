@@ -10,9 +10,9 @@ import android.view.MenuItem;
 public class ArtistTop10Activity extends AppCompatActivity
 {
     private final String LOG_TAG = ArtistTop10Activity.class.getName();
-    private final String ARTIST_TOP10_FRAGMENT_TAG = ArtistTop10ActivityFragment.class.getSimpleName();
+    private final String ARTIST_TOP10_FRAGMENT_TAG = ArtistTop10Fragment.class.getSimpleName();
 
-    private ArtistTop10ActivityFragment _artistTop10ActivityFragment;
+    private ArtistTop10Fragment _artistTop10Fragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -21,17 +21,17 @@ public class ArtistTop10Activity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_top10);
 
-        _artistTop10ActivityFragment =
-                (ArtistTop10ActivityFragment)getFragmentManager()
+        _artistTop10Fragment =
+                (ArtistTop10Fragment)getSupportFragmentManager()
                         .findFragmentByTag(ARTIST_TOP10_FRAGMENT_TAG);
-        if (_artistTop10ActivityFragment == null)
+        if (_artistTop10Fragment == null)
         {
-            _artistTop10ActivityFragment = new ArtistTop10ActivityFragment();
+            _artistTop10Fragment = new ArtistTop10Fragment();
         }
-        getFragmentManager()
+        getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.activity_artist_top10_container,
-                        _artistTop10ActivityFragment,
+                        _artistTop10Fragment,
                         ARTIST_TOP10_FRAGMENT_TAG)
                 .commit();
     }
