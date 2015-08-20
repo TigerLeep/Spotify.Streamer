@@ -1,5 +1,6 @@
 package com.tigerbase.spotifystreamer;
 
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -25,7 +27,7 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class ArtistTop10Fragment extends Fragment
+public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPlayerHost
 {
     private final static String LOG_TAG = ArtistTop10Fragment.class.getSimpleName();
 
@@ -33,9 +35,12 @@ public class ArtistTop10Fragment extends Fragment
     private final String ARTIST_NAME_STATE_TAG = "ArtistName";
     private final String TRACKS_STATE_TAG = "Tracks";
     private final String LIST_VIEW_STATE_TAG = "ListView";
+    private final String PLAYER_DIALOG_TAG = PlayerFragment.class.getSimpleName();
+
     private String _artistId = "";
     private String _artistName = "";
     private ArrayList<TrackParcelable> _tracks = null;
+    private int _currentTrack = 0;
     private ArtistTop10Adapter _adapter = null;
     private Boolean _loadedFromState = false;
     private ListView _listView = null;
@@ -66,6 +71,15 @@ public class ArtistTop10Fragment extends Fragment
 
         _listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
         _listView.setAdapter(_adapter);
+
+        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
+            {
+                onTrackSelected(position);
+            }
+        });
 
         if (savedInstanceState != null)
         {
@@ -179,5 +193,48 @@ public class ArtistTop10Fragment extends Fragment
         _artistId = id;
         _artistName = name;
         loadAlbums();
+    }
+
+    @Override
+    public TrackParcelable getCurrentTrack()
+    {
+        return (TrackParcelable)_adapter.getItem(_currentTrack);
+    }
+
+    @Override
+    public TrackParcelable getNextTrack()
+    {
+        if (_adapter.getCount() > _currentTrack + 1)
+        {
+            _currentTrack++;
+        }
+        else
+        {
+            _currentTrack = 0;
+        }
+        return getCurrentTrack();
+    }
+
+    @Override
+    public TrackParcelable getPreviousTrack()
+    {
+        if (_currentTrack > 0)
+        {
+            _currentTrack--;
+        }
+        else
+        {
+            _currentTrack = _adapter.getCount() - 1;
+        }
+        return getCurrentTrack();
+    }
+
+    public void onTrackSelected(int position)
+    {
+        _currentTrack = position;
+        TrackParcelable track = _adapter.getItem(_currentTrack);
+
+        DialogFragment dialog = new PlayerFragment();
+        dialog.show(getActivity().getSupportFragmentManager(), PLAYER_DIALOG_TAG);
     }
 }
