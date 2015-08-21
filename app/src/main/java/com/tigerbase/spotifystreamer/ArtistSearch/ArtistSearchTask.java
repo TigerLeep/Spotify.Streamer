@@ -1,9 +1,12 @@
-package com.tigerbase.spotifystreamer;
+package com.tigerbase.spotifystreamer.ArtistSearch;
 
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.tigerbase.spotifystreamer.ArtistParcelable;
+import com.tigerbase.spotifystreamer.R;
 
 import java.util.ArrayList;
 

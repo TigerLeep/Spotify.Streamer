@@ -1,6 +1,5 @@
-package com.tigerbase.spotifystreamer;
+package com.tigerbase.spotifystreamer.ArtistTop10;
 
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,6 +14,10 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.tigerbase.spotifystreamer.Player.PlayerActivity;
+import com.tigerbase.spotifystreamer.R;
+import com.tigerbase.spotifystreamer.TrackParcelable;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +30,7 @@ import retrofit.Callback;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPlayerHost
+public class ArtistTop10Fragment extends Fragment
 {
     private final static String LOG_TAG = ArtistTop10Fragment.class.getSimpleName();
 
@@ -35,7 +38,6 @@ public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPla
     private final String ARTIST_NAME_STATE_TAG = "ArtistName";
     private final String TRACKS_STATE_TAG = "Tracks";
     private final String LIST_VIEW_STATE_TAG = "ListView";
-    private final String PLAYER_DIALOG_TAG = PlayerFragment.class.getSimpleName();
 
     private String _artistId = "";
     private String _artistName = "";
@@ -63,6 +65,7 @@ public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPla
                              Bundle savedInstanceState)
     {
         Log.v(LOG_TAG, "onCreateView");
+
         View rootView = inflater.inflate(R.layout.fragment_artist_top10, container, false);
         _adapter = new ArtistTop10Adapter(
                 getActivity(),
@@ -72,11 +75,9 @@ public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPla
         _listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
         _listView.setAdapter(_adapter);
 
-        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
+        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
-            {
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 onTrackSelected(position);
             }
         });
@@ -148,19 +149,15 @@ public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPla
             SpotifyService spotify = api.getService();
             Map<String, Object> options = new HashMap<>();
             options.put("country", "US");
-            spotify.getArtistTopTrack(_artistId, options, new Callback<Tracks>()
-            {
+            spotify.getArtistTopTrack(_artistId, options, new Callback<Tracks>() {
                 @Override
-                public void success(Tracks tracks, Response response)
-                {
+                public void success(Tracks tracks, Response response) {
                     _adapter.clear();
                     _tracks.clear();
                     if (tracks != null
                             && tracks.tracks != null
-                            && tracks.tracks.size() > 0)
-                    {
-                        for(Track track : tracks.tracks)
-                        {
+                            && tracks.tracks.size() > 0) {
+                        for (Track track : tracks.tracks) {
                             _tracks.add(new TrackParcelable(track));
                         }
                         _adapter.addAll(_tracks);
@@ -169,8 +166,7 @@ public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPla
                 }
 
                 @Override
-                public void failure(RetrofitError ex)
-                {
+                public void failure(RetrofitError ex) {
                     Log.e(LOG_TAG, ex.getMessage());
                 }
             });
@@ -195,46 +191,15 @@ public class ArtistTop10Fragment extends Fragment implements PlayerFragment.IPla
         loadAlbums();
     }
 
-    @Override
-    public TrackParcelable getCurrentTrack()
-    {
-        return (TrackParcelable)_adapter.getItem(_currentTrack);
-    }
-
-    @Override
-    public TrackParcelable getNextTrack()
-    {
-        if (_adapter.getCount() > _currentTrack + 1)
-        {
-            _currentTrack++;
-        }
-        else
-        {
-            _currentTrack = 0;
-        }
-        return getCurrentTrack();
-    }
-
-    @Override
-    public TrackParcelable getPreviousTrack()
-    {
-        if (_currentTrack > 0)
-        {
-            _currentTrack--;
-        }
-        else
-        {
-            _currentTrack = _adapter.getCount() - 1;
-        }
-        return getCurrentTrack();
-    }
-
     public void onTrackSelected(int position)
     {
         _currentTrack = position;
-        TrackParcelable track = _adapter.getItem(_currentTrack);
-
-        DialogFragment dialog = new PlayerFragment();
-        dialog.show(getActivity().getSupportFragmentManager(), PLAYER_DIALOG_TAG);
+        Intent intent = new Intent(getActivity(), PlayerActivity.class);
+        Bundle extras = new Bundle();
+        extras.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
+        extras.putInt(getString(R.string.bundle_current_track), _currentTrack);
+        intent.putExtras(extras);
+        startActivity(intent);
     }
+
 }

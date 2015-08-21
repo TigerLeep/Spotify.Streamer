@@ -1,7 +1,6 @@
-package com.tigerbase.spotifystreamer;
+package com.tigerbase.spotifystreamer.ArtistSearch;
 
 import android.support.v4.app.Fragment;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -14,6 +13,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import com.tigerbase.spotifystreamer.ArtistParcelable;
+import com.tigerbase.spotifystreamer.IArtistList;
+import com.tigerbase.spotifystreamer.R;
 
 import java.util.ArrayList;
 

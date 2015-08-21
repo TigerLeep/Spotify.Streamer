@@ -16,21 +16,15 @@ public class TrackParcelable implements Parcelable
     public String Name = "";
     public String ThumbnailImageUrl = "";
     public String AlbumName = "";
+    public String PreviewUrl = "";
 
     public TrackParcelable()
     {
     }
 
-    public TrackParcelable(String id, String name, String thumbnailImageUrl, String albumName)
-    {
-        Id = id;
-        Name = name;
-        ThumbnailImageUrl = thumbnailImageUrl;
-        AlbumName = albumName;
-    }
-
     public TrackParcelable(Track track)
     {
+        PreviewUrl = track.preview_url;
         Id = track.id;
         Name = track.name;
         if (track.album != null)
@@ -58,6 +52,7 @@ public class TrackParcelable implements Parcelable
                     track.Name = in.readString();
                     track.ThumbnailImageUrl = in.readString();
                     track.AlbumName = in.readString();
+                    track.PreviewUrl = in.readString();
                     return track;
                 }
 
@@ -77,6 +72,7 @@ public class TrackParcelable implements Parcelable
         dest.writeString(Name);
         dest.writeString(ThumbnailImageUrl);
         dest.writeString(AlbumName);
+        dest.writeString(PreviewUrl);
     }
 
     private String getThumbnailImageUrl(AlbumSimple album)

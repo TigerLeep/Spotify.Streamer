@@ -14,4 +14,7 @@
     <string name="player_cancel_text">Cancel</string>
     <string name="player_next_text">Next</string>
     <string name="player_previous_text">Prev</string>
+    <string name="bundle_tracks">Tracks</string>
+    <string name="bundle_current_track">Current_Track</string>
+    <string name="player_name">Preview</string>
 </resources>

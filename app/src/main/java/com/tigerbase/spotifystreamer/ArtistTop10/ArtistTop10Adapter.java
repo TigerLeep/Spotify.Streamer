@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer;
+package com.tigerbase.spotifystreamer.ArtistTop10;
 
 import android.content.Context;
 import android.util.Log;
@@ -10,6 +10,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
+import com.tigerbase.spotifystreamer.R;
+import com.tigerbase.spotifystreamer.TrackParcelable;
 
 import java.util.ArrayList;
 

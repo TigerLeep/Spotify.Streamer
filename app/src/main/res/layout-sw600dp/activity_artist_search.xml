@@ -15,7 +15,7 @@
 
     <fragment
         android:id="@+id/forecast_artist_search"
-        android:name="com.tigerbase.spotifystreamer.ArtistSearchFragment"
+        android:name="com.tigerbase.spotifystreamer.ArtistSearch.ArtistSearchFragment"
         android:layout_width="0dp"
         android:layout_weight="2"
         android:layout_height="match_parent"

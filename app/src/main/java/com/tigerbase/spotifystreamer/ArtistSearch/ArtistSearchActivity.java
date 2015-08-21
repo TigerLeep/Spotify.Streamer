@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer;
+package com.tigerbase.spotifystreamer.ArtistSearch;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -6,6 +6,11 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.tigerbase.spotifystreamer.ArtistTop10.ArtistTop10Activity;
+import com.tigerbase.spotifystreamer.ArtistTop10.ArtistTop10Fragment;
+import com.tigerbase.spotifystreamer.IArtistList;
+import com.tigerbase.spotifystreamer.R;
 
 public class ArtistSearchActivity extends ActionBarActivity implements IArtistList
 {

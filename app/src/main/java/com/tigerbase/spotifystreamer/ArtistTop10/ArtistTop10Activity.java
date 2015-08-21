@@ -1,19 +1,20 @@
-package com.tigerbase.spotifystreamer;
+package com.tigerbase.spotifystreamer.ArtistTop10;
 
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import kaaes.spotify.webapi.android.models.Track;
+import com.tigerbase.spotifystreamer.Player.PlayerFragment;
+import com.tigerbase.spotifystreamer.R;
 
 
-public class ArtistTop10Activity extends AppCompatActivity implements PlayerFragment.IPlayerHost
+public class ArtistTop10Activity extends AppCompatActivity
 {
     private final String LOG_TAG = ArtistTop10Activity.class.getName();
     private final String ARTIST_TOP10_FRAGMENT_TAG = ArtistTop10Fragment.class.getSimpleName();
+    private final String PLAYER_DIALOG_TAG = PlayerFragment.class.getSimpleName();
 
     private ArtistTop10Fragment _artistTop10Fragment;
 
@@ -71,23 +72,5 @@ public class ArtistTop10Activity extends AppCompatActivity implements PlayerFrag
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public TrackParcelable getCurrentTrack()
-    {
-        return _artistTop10Fragment.getCurrentTrack();
-    }
-
-    @Override
-    public TrackParcelable getNextTrack()
-    {
-        return _artistTop10Fragment.getNextTrack();
-    }
-
-    @Override
-    public TrackParcelable getPreviousTrack()
-    {
-        return _artistTop10Fragment.getPreviousTrack();
     }
 }
