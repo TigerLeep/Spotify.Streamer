@@ -24,7 +24,9 @@
         <activity
             android:name=".ArtistTop10.ArtistTop10Activity"
             android:label="@string/top_tracks_name"
-            android:parentActivityName=".ArtistSearch.ArtistSearchActivity">
+            android:parentActivityName=".ArtistSearch.ArtistSearchActivity"
+            android:launchMode="singleTop"
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ArtistSearch.ArtistSearchActivity" />
@@ -32,7 +34,9 @@
         <activity
             android:name=".Player.PlayerActivity"
             android:label="@string/player_name"
-            android:parentActivityName=".ArtistTop10.ArtistTop10Activity">
+            android:parentActivityName=".ArtistTop10.ArtistTop10Activity"
+            android:launchMode="singleTop"
+            >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ArtistTop10.ArtistTop10Activity" />

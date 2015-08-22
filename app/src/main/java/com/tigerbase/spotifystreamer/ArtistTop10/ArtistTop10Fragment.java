@@ -84,6 +84,7 @@ public class ArtistTop10Fragment extends Fragment
 
         if (savedInstanceState != null)
         {
+            Log.v(LOG_TAG, "onCreateView: savedInstanceState != null");
             _artistId = savedInstanceState.getString(ARTIST_ID_STATE_TAG);
             _artistName = savedInstanceState.getString(ARTIST_NAME_STATE_TAG);
             _tracks = savedInstanceState.getParcelableArrayList(TRACKS_STATE_TAG);
@@ -92,12 +93,15 @@ public class ArtistTop10Fragment extends Fragment
         }
         else
         {
+            Log.v(LOG_TAG, "onCreateView: savedInstanceState == null");
             Intent intent = getActivity().getIntent();
             if (intent != null)
             {
+                Log.v(LOG_TAG, "onCreateView: intent != null");
                 Bundle extras = intent.getExtras();
                 if(extras != null)
                 {
+                    Log.v(LOG_TAG, "onCreateView: extras != null");
                     _artistId = extras.getString(getString(R.string.intent_extra_artist_id));
                     _artistName = extras.getString(getString(R.string.intent_extra_artist_name));
                 }
@@ -132,11 +136,13 @@ public class ArtistTop10Fragment extends Fragment
         Log.v(LOG_TAG, "loadAlbums");
         if(_artistId.length() == 0)
         {
+            Log.v(LOG_TAG, "loadAlbums: _artistId.length() == 0");
             return;
         }
 
         if(_loadedFromState)
         {
+            Log.v(LOG_TAG, "loadAlbums: loadedFromState == true");
             _adapter.clear();
             _adapter.addAll(_tracks);
             _listView.onRestoreInstanceState(_listState);
@@ -145,6 +151,7 @@ public class ArtistTop10Fragment extends Fragment
         }
         else
         {
+            Log.v(LOG_TAG, "loadAlbums: loadedFromState == false");
             SpotifyApi api = new SpotifyApi();
             SpotifyService spotify = api.getService();
             Map<String, Object> options = new HashMap<>();
