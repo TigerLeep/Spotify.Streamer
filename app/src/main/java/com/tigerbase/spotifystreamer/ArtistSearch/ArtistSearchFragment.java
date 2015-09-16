@@ -27,11 +27,12 @@ public class ArtistSearchFragment extends Fragment
     private final String ARTISTS_STATE_TAG = "Artists";
     private final String PARTIAL_NAME_STATE_TAG = "PartialName";
     private final String LIST_VIEW_STATE_TAG = "ListView";
+
     private String _artistPartialName = "";
     private ArrayList<ArtistParcelable> _artists = null;
     private ArtistAdapter _adapter = null;
     private ArtistSearchTask _artistSearchTask = null;
-    private Boolean _loadedFromState = false;
+    private Boolean _wasStateLoadedFromSavedState = false;
     private ListView _listView = null;
     private Parcelable _listState = null;
 
@@ -53,19 +54,31 @@ public class ArtistSearchFragment extends Fragment
     {
         Log.v(LOG_TAG, "onCreateView");
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
+
+        initializeArtistAdapter();
+        initializeArtistSearchList(rootView);
+        initializeArtistSearchNameField(rootView);
+        initializeState(savedInstanceState);
+
+        return rootView;
+    }
+
+    private void initializeArtistAdapter()
+    {
         _adapter = new ArtistAdapter(
                 getActivity(),
                 R.layout.list_item_artist,
                 new ArrayList<ArtistParcelable>());
+    }
 
+    private void initializeArtistSearchList(View rootView)
+    {
         _listView = (ListView)rootView.findViewById(R.id.artist_search_list);
         _listView.setAdapter(_adapter);
 
-        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
-        {
+        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
-            {
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 ArtistParcelable artist = _adapter.getItem(position);
                 if (getActivity() instanceof IArtistList) {
                     Log.v(LOG_TAG, "instanceof IArtistList");
@@ -73,43 +86,53 @@ public class ArtistSearchFragment extends Fragment
                 }
             }
         });
+    }
 
+    private void initializeArtistSearchNameField(View rootView)
+    {
         EditText artistSearchName = (EditText) rootView.findViewById(R.id.artist_search_name);
-        artistSearchName.addTextChangedListener(new TextWatcher()
-        {
+        artistSearchName.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after)
-            {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count)
-            {
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
             }
 
             @Override
-            public void afterTextChanged(Editable s)
-            {
+            public void afterTextChanged(Editable s) {
                 Log.v(LOG_TAG, "afterTextChanged");
                 SearchArtists(s.toString());
             }
         });
+    }
 
+    private void initializeState(Bundle savedInstanceState)
+    {
         if (savedInstanceState != null)
         {
-            _artistPartialName = savedInstanceState.getString(PARTIAL_NAME_STATE_TAG);
-            _artists = savedInstanceState.getParcelableArrayList(ARTISTS_STATE_TAG);
-            _listState = savedInstanceState.getParcelable(LIST_VIEW_STATE_TAG);
-            _loadedFromState = true;
+            initializeStateWithSavedState(savedInstanceState);
         }
         else
         {
-            _artistPartialName = "";
-            _artists = new ArrayList<>();
-            _loadedFromState = false;
+            initializeStateWithoutSavedState();
         }
+    }
 
-        return rootView;
+    private void initializeStateWithSavedState(Bundle savedInstanceState)
+    {
+        _artistPartialName = savedInstanceState.getString(PARTIAL_NAME_STATE_TAG);
+        _artists = savedInstanceState.getParcelableArrayList(ARTISTS_STATE_TAG);
+        _listState = savedInstanceState.getParcelable(LIST_VIEW_STATE_TAG);
+        _wasStateLoadedFromSavedState = true;
+    }
+
+    private void initializeStateWithoutSavedState()
+    {
+        _artistPartialName = "";
+        _artists = new ArrayList<>();
+        _wasStateLoadedFromSavedState = false;
     }
 
     @Override
@@ -125,27 +148,44 @@ public class ArtistSearchFragment extends Fragment
     private void SearchArtists(String artistPartialName)
     {
         Log.v(LOG_TAG, "SearchArtists");
-        if(_artistSearchTask != null && _artistSearchTask.getStatus() != AsyncTask.Status.FINISHED)
-        {
-            _artistSearchTask.cancel(true);
-        }
+
+        cancelCurrentSearchIfAny();
 
         if(artistPartialName.length() == 0)
         {
             return;
         }
-        if (_loadedFromState)
+
+        if (_wasStateLoadedFromSavedState)
         {
-            _adapter.clear();
-            _adapter.addAll(_artists);
-            _listView.onRestoreInstanceState(_listState);
-            _loadedFromState = false;
+            restoreArtistSearchFromState();
         }
         else
         {
-            _artistPartialName = artistPartialName;
-            _artistSearchTask = new ArtistSearchTask(_artists, _adapter, getActivity());
-            _artistSearchTask.execute(artistPartialName);
+            startArtistSearch(artistPartialName);
         }
+    }
+
+    private void cancelCurrentSearchIfAny()
+    {
+        if(_artistSearchTask != null && _artistSearchTask.getStatus() != AsyncTask.Status.FINISHED)
+        {
+            _artistSearchTask.cancel(true);
+        }
+    }
+
+    private void restoreArtistSearchFromState()
+    {
+        _adapter.clear();
+        _adapter.addAll(_artists);
+        _listView.onRestoreInstanceState(_listState);
+        _wasStateLoadedFromSavedState = false;
+    }
+
+    private void startArtistSearch(String artistPartialName)
+    {
+        _artistPartialName = artistPartialName;
+        _artistSearchTask = new ArtistSearchTask(_artists, _adapter, getActivity());
+        _artistSearchTask.execute(artistPartialName);
     }
 }

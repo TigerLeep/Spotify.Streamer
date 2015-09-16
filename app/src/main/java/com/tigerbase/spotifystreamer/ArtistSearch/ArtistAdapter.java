@@ -33,20 +33,33 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
     public View getView(int position, View convertView, ViewGroup parent)
     {
         Log.v(LOG_TAG, "getView");
-        View view = convertView;
 
-        if (view == null)
-        {
-            LayoutInflater inflater = LayoutInflater.from(getContext());
-            view = inflater.inflate(R.layout.list_item_artist, parent, false);
-        }
+        View artistListItemView = (convertView == null)
+                ? getArtistListItemViewFromLayout(parent)
+                : convertView;
 
         ArtistParcelable artist = getItem(position);
+        loadArtistListItemView(artistListItemView, artist);
 
+        return artistListItemView;
+    }
+
+    private View getArtistListItemViewFromLayout(ViewGroup parent)
+    {
+        View view;
+
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+        view = inflater.inflate(R.layout.list_item_artist, parent, false);
+
+        return view;
+    }
+
+    private void loadArtistListItemView(View artistListItemView, ArtistParcelable artist)
+    {
         if (artist != null)
         {
-            ImageView thumbnailImageView = (ImageView) view.findViewById(R.id.list_item_artist_thumbnail);
-            TextView nameTextView = (TextView) view.findViewById(R.id.list_item_artist_name);
+            ImageView thumbnailImageView = (ImageView) artistListItemView.findViewById(R.id.list_item_artist_thumbnail);
+            TextView nameTextView = (TextView) artistListItemView.findViewById(R.id.list_item_artist_name);
 
             if (thumbnailImageView != null)
             {
@@ -68,7 +81,6 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
                 nameTextView.setText(artist.Name);
             }
         }
-
-        return view;
     }
+
 }

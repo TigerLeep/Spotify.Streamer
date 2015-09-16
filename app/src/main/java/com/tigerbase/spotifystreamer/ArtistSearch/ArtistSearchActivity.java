@@ -28,25 +28,11 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
 
         if (findViewById(R.id.artist_top10_container) != null)
         {
-            _twoPane = true;
-            Log.v(LOG_TAG, "onCreate - _twoPane = true");
-            if (savedInstanceState == null)
-            {
-                Log.v(LOG_TAG, "onCreate - savedInstanceState == null");
-                ArtistTop10Fragment top10Fragment = new ArtistTop10Fragment();
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.artist_top10_container,
-                                top10Fragment,
-                                TOP10FRAGMENT_TAG)
-                        .commit();
-            }
+            initializeTwoPane(savedInstanceState);
         }
         else
         {
-            _twoPane = false;
-            Log.v(LOG_TAG, "onCreate - _twoPane = false");
-            getSupportActionBar().setElevation(0f);
+            initializeOnePane();
         }
     }
 
@@ -122,24 +108,54 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
         Log.v(LOG_TAG, "onArtistSelected: id=[" + id + "], name=[" + name + "]");
         if(!_twoPane)
         {
-            Log.v(LOG_TAG, "onForecastSelected: !_twoPane");
-            Intent intent = new Intent(this, ArtistTop10Activity.class);
-            Bundle extras = new Bundle();
-            extras.putString(getString(R.string.intent_extra_artist_id), id);
-            extras.putString(getString(R.string.intent_extra_artist_name), name);
-            intent.putExtras(extras);
-            startActivity(intent);
+            launchArtistTop10Activity(id, name);
         }
         else
         {
-            Log.v(LOG_TAG, "onArtistSelected: _twoPane");
-            ArtistTop10Fragment top10Fragment = (ArtistTop10Fragment)getSupportFragmentManager()
-                    .findFragmentByTag(TOP10FRAGMENT_TAG);
-            if(top10Fragment != null)
-            {
-                top10Fragment.onArtistChange(id, name);
-            }
+            informArtistTop10FragmentArtistChanged(id, name);
         }
+    }
+
+    private void initializeOnePane() {
+        _twoPane = false;
+        Log.v(LOG_TAG, "onCreate - _twoPane = false");
+        getSupportActionBar().setElevation(0f);
+    }
+
+    private void initializeTwoPane(Bundle savedInstanceState) {
+        _twoPane = true;
+        Log.v(LOG_TAG, "onCreate - _twoPane = true");
+        if (savedInstanceState == null)
+        {
+            Log.v(LOG_TAG, "onCreate - savedInstanceState == null");
+            ArtistTop10Fragment top10Fragment = new ArtistTop10Fragment();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.artist_top10_container,
+                            top10Fragment,
+                            TOP10FRAGMENT_TAG)
+                    .commit();
+        }
+    }
+
+    private void informArtistTop10FragmentArtistChanged(String id, String name) {
+        Log.v(LOG_TAG, "onArtistSelected: _twoPane");
+        ArtistTop10Fragment top10Fragment = (ArtistTop10Fragment)getSupportFragmentManager()
+                .findFragmentByTag(TOP10FRAGMENT_TAG);
+        if(top10Fragment != null)
+        {
+            top10Fragment.onArtistChange(id, name);
+        }
+    }
+
+    private void launchArtistTop10Activity(String id, String name) {
+        Log.v(LOG_TAG, "onForecastSelected: !_twoPane");
+        Intent intent = new Intent(this, ArtistTop10Activity.class);
+        Bundle extras = new Bundle();
+        extras.putString(getString(R.string.intent_extra_artist_id), id);
+        extras.putString(getString(R.string.intent_extra_artist_name), name);
+        intent.putExtras(extras);
+        startActivity(intent);
     }
 
 }

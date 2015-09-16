@@ -2,6 +2,8 @@ package com.tigerbase.spotifystreamer.ArtistSearch;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -34,23 +36,54 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
         _context = context;
     }
 
+    @Override
     protected ArrayList<ArtistParcelable> doInBackground(String... params)
     {
         Log.v(LOG_TAG, "doInBackground");
+
+        if (!areParametersValid(params))
+        {
+            return null;
+        }
+
+        delayToPreventRapidFireApiCalls();
+        if (isCancelled())
+        {
+            return null;
+        }
+
+        String artistPartialName = params[0];
+        ArtistsPager artistsPager = CallSpotifySearchApi(artistPartialName);
+
+        return getArtistParcelablesFromArtistsPager(artistsPager);
+    }
+
+    @Override
+    protected void onPostExecute(ArrayList<ArtistParcelable> artists)
+    {
+        Log.v(LOG_TAG, "onPostExecute");
+
+        loadArtists(artists);
+        showMessageIfNoArtistsFound(artists);
+    }
+
+
+    private boolean areParametersValid(String[] params)
+    {
         if (params.length != 1)
         {
             Log.e(LOG_TAG, "Invalid parameters passed to ArtistSearchTask.doInBackground");
-            return null;
+            return false;
         }
         if(params[0].length() == 0)
         {
-            return null;
+            return false;
         }
+        return true;
+    }
 
-        // Add an * to the end of each word to make it a "Starts With" wild card search.
-        String artistPartialName = params[0].replace(" ", "* ") + "*";
-
-        // Pause for a short time to ensure we don't rapid-fire API calls to Spotify.
+    private void delayToPreventRapidFireApiCalls()
+    {
         try
         {
             Thread.sleep(200);
@@ -59,13 +92,11 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
         {
             cancel(true);
         }
+    }
 
-        if (isCancelled())
-        {
-            // This task was cancelled, possibly due to the user typing additional characters
-            // in the search field which will cancel this task and start a new one.
-            return null;
-        }
+    private ArtistsPager CallSpotifySearchApi(String artistPartialName)
+    {
+        artistPartialName = GetStartsWithSearchQuery(artistPartialName);
 
         // Call the spotify API to get a list of matching artists
         SpotifyApi api = new SpotifyApi();
@@ -79,7 +110,17 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
         {
             Log.e(LOG_TAG, ex.getMessage());
         }
+        return artistsPager;
+    }
 
+    private String GetStartsWithSearchQuery(String param)
+    {
+        //
+        return param.replace(" ", "* ") + "*";
+    }
+
+    private ArrayList<ArtistParcelable> getArtistParcelablesFromArtistsPager(ArtistsPager artistsPager)
+    {
         ArrayList<ArtistParcelable> artists = new ArrayList<>();
         if (artistsPager != null)
         {
@@ -88,20 +129,20 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
                 artists.add(new ArtistParcelable(artist));
             }
         }
-
         return artists;
     }
 
-    @Override
-    protected void onPostExecute(ArrayList<ArtistParcelable> artists)
+    private void loadArtists(ArrayList<ArtistParcelable> artists)
     {
-        Log.v(LOG_TAG, "onPostExecute");
         _artists.clear();
         _adapter.clear();
 
         _artists.addAll(artists);
         _adapter.addAll(artists);
+    }
 
+    private void showMessageIfNoArtistsFound(ArrayList<ArtistParcelable> artists)
+    {
         if (artists == null || artists.isEmpty())
         {
             String message = _context.getString(R.string.no_artists_found);
