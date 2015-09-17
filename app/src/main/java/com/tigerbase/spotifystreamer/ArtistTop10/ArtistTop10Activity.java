@@ -25,19 +25,7 @@ public class ArtistTop10Activity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_top10);
 
-        _artistTop10Fragment =
-                (ArtistTop10Fragment)getSupportFragmentManager()
-                        .findFragmentByTag(ARTIST_TOP10_FRAGMENT_TAG);
-        if (_artistTop10Fragment == null)
-        {
-            _artistTop10Fragment = new ArtistTop10Fragment();
-        }
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.activity_artist_top10_container,
-                        _artistTop10Fragment,
-                        ARTIST_TOP10_FRAGMENT_TAG)
-                .commit();
+        initializeArtistTop10Fragment();
     }
 
     @Override
@@ -65,7 +53,6 @@ public class ArtistTop10Activity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings)
         {
             return true;
@@ -73,4 +60,23 @@ public class ArtistTop10Activity extends AppCompatActivity
 
         return super.onOptionsItemSelected(item);
     }
+
+
+    private void initializeArtistTop10Fragment()
+    {
+        _artistTop10Fragment =
+                (ArtistTop10Fragment)getSupportFragmentManager()
+                        .findFragmentByTag(ARTIST_TOP10_FRAGMENT_TAG);
+        if (_artistTop10Fragment == null)
+        {
+            _artistTop10Fragment = new ArtistTop10Fragment();
+        }
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.activity_artist_top10_container,
+                        _artistTop10Fragment,
+                        ARTIST_TOP10_FRAGMENT_TAG)
+                .commit();
+    }
+
 }

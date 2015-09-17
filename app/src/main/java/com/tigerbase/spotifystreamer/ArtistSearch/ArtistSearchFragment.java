@@ -151,7 +151,7 @@ public class ArtistSearchFragment extends Fragment
 
         cancelCurrentSearchIfAny();
 
-        if(artistPartialName.length() == 0)
+        if (!AreSearchParametersValid(artistPartialName))
         {
             return;
         }
@@ -164,6 +164,11 @@ public class ArtistSearchFragment extends Fragment
         {
             startArtistSearch(artistPartialName);
         }
+    }
+
+    private boolean AreSearchParametersValid(String artistPartialName)
+    {
+        return artistPartialName.length() > 0;
     }
 
     private void cancelCurrentSearchIfAny()

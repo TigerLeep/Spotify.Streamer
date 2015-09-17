@@ -44,7 +44,7 @@ public class ArtistTop10Fragment extends Fragment
     private ArrayList<TrackParcelable> _tracks = null;
     private int _currentTrack = 0;
     private ArtistTop10Adapter _adapter = null;
-    private Boolean _loadedFromState = false;
+    private Boolean _isStateBeingLoadedFromSavedState = false;
     private ListView _listView = null;
     private Parcelable _listState = null;
 
@@ -65,56 +65,12 @@ public class ArtistTop10Fragment extends Fragment
                              Bundle savedInstanceState)
     {
         Log.v(LOG_TAG, "onCreateView");
-
         View rootView = inflater.inflate(R.layout.fragment_artist_top10, container, false);
-        _adapter = new ArtistTop10Adapter(
-                getActivity(),
-                R.layout.list_item_artist_top10,
-                new ArrayList<TrackParcelable>());
 
-        _listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
-        _listView.setAdapter(_adapter);
-
-        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                onTrackSelected(position);
-            }
-        });
-
-        if (savedInstanceState != null)
-        {
-            Log.v(LOG_TAG, "onCreateView: savedInstanceState != null");
-            _artistId = savedInstanceState.getString(ARTIST_ID_STATE_TAG);
-            _artistName = savedInstanceState.getString(ARTIST_NAME_STATE_TAG);
-            _tracks = savedInstanceState.getParcelableArrayList(TRACKS_STATE_TAG);
-            _listState = savedInstanceState.getParcelable(LIST_VIEW_STATE_TAG);
-            _loadedFromState = true;
-        }
-        else
-        {
-            Log.v(LOG_TAG, "onCreateView: savedInstanceState == null");
-            Intent intent = getActivity().getIntent();
-            if (intent != null)
-            {
-                Log.v(LOG_TAG, "onCreateView: intent != null");
-                Bundle extras = intent.getExtras();
-                if(extras != null)
-                {
-                    Log.v(LOG_TAG, "onCreateView: extras != null");
-                    _artistId = extras.getString(getString(R.string.intent_extra_artist_id));
-                    _artistName = extras.getString(getString(R.string.intent_extra_artist_name));
-                }
-            }
-            _tracks = new ArrayList<>();
-            _loadedFromState = false;
-        }
-
-        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
-        if (actionBar != null)
-        {
-            actionBar.setSubtitle(_artistName);
-        }
+        initializeArtistTop10Adapter();
+        initializeArtistTop10List(rootView);
+        initializeState(savedInstanceState);
+        setSubTitle();
         loadAlbums();
 
         return rootView;
@@ -131,53 +87,179 @@ public class ArtistTop10Fragment extends Fragment
         outState.putParcelable(LIST_VIEW_STATE_TAG, _listView.onSaveInstanceState());
     }
 
-    private void loadAlbums()
-    {
-        Log.v(LOG_TAG, "loadAlbums");
-        if(_artistId.length() == 0)
-        {
-            Log.v(LOG_TAG, "loadAlbums: _artistId.length() == 0");
-            return;
-        }
 
-        if(_loadedFromState)
+    private void initializeArtistTop10Adapter()
+    {
+        Log.v(LOG_TAG, "initializeArtistTop10Adapter");
+        _adapter = new ArtistTop10Adapter(
+                getActivity(),
+                R.layout.list_item_artist_top10,
+                new ArrayList<TrackParcelable>());
+    }
+
+    private void initializeArtistTop10List(View rootView)
+    {
+        Log.v(LOG_TAG, "initializeArtistTop10List");
+        _listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
+        _listView.setAdapter(_adapter);
+
+        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                onTrackSelected(position);
+            }
+        });
+    }
+
+    private void initializeState(Bundle savedInstanceState)
+    {
+        Log.v(LOG_TAG, "initializeState");
+        if (savedInstanceState != null)
         {
-            Log.v(LOG_TAG, "loadAlbums: loadedFromState == true");
-            _adapter.clear();
-            _adapter.addAll(_tracks);
-            _listView.onRestoreInstanceState(_listState);
-            checkTracksForEmpty();
-            _loadedFromState = false;
+            initializeStateWithSavedState(savedInstanceState);
         }
         else
         {
-            Log.v(LOG_TAG, "loadAlbums: loadedFromState == false");
-            SpotifyApi api = new SpotifyApi();
-            SpotifyService spotify = api.getService();
-            Map<String, Object> options = new HashMap<>();
-            options.put("country", "US");
-            spotify.getArtistTopTrack(_artistId, options, new Callback<Tracks>() {
-                @Override
-                public void success(Tracks tracks, Response response) {
-                    _adapter.clear();
-                    _tracks.clear();
-                    if (tracks != null
-                            && tracks.tracks != null
-                            && tracks.tracks.size() > 0) {
-                        for (Track track : tracks.tracks) {
-                            _tracks.add(new TrackParcelable(track));
-                        }
-                        _adapter.addAll(_tracks);
-                    }
-                    checkTracksForEmpty();
-                }
-
-                @Override
-                public void failure(RetrofitError ex) {
-                    Log.e(LOG_TAG, ex.getMessage());
-                }
-            });
+            initializeStateWithoutSavedState();
         }
+    }
+
+    private void initializeStateWithoutSavedState()
+    {
+        Log.v(LOG_TAG, "initializeStateWithoutSavedState");
+        Intent intent = getActivity().getIntent();
+        if (intent != null)
+        {
+            initializeStateWithIntent(intent);
+        }
+        _tracks = new ArrayList<>();
+        _isStateBeingLoadedFromSavedState = false;
+    }
+
+    private void initializeStateWithIntent(Intent intent)
+    {
+        Log.v(LOG_TAG, "initializeStateWithIntent");
+        Bundle extras = intent.getExtras();
+        if(extras != null)
+        {
+            Log.v(LOG_TAG, "initializeStateWithIntent: extras != null");
+            _artistId = extras.getString(getString(R.string.intent_extra_artist_id));
+            _artistName = extras.getString(getString(R.string.intent_extra_artist_name));
+        }
+    }
+
+    private void initializeStateWithSavedState(Bundle savedInstanceState)
+    {
+        Log.v(LOG_TAG, "initializeStateWithSavedState");
+        _artistId = savedInstanceState.getString(ARTIST_ID_STATE_TAG);
+        _artistName = savedInstanceState.getString(ARTIST_NAME_STATE_TAG);
+        _tracks = savedInstanceState.getParcelableArrayList(TRACKS_STATE_TAG);
+        _listState = savedInstanceState.getParcelable(LIST_VIEW_STATE_TAG);
+        _isStateBeingLoadedFromSavedState = true;
+    }
+
+    private void setSubTitle()
+    {
+        Log.v(LOG_TAG, "setSubTitle");
+        ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        if (actionBar != null)
+        {
+            actionBar.setSubtitle(_artistName);
+        }
+    }
+
+    private void loadAlbums()
+    {
+        Log.v(LOG_TAG, "loadAlbums");
+
+        if (!isArtistIdValid())
+        {
+            Log.v(LOG_TAG, "loadAlbums: Artist ID invalid");
+            return;
+        }
+
+        if(_isStateBeingLoadedFromSavedState)
+        {
+            restoreAlbumsFromState();
+            _isStateBeingLoadedFromSavedState = false;
+        }
+        else
+        {
+            loadAlbumsFromSpotify();
+        }
+    }
+
+    private void restoreAlbumsFromState()
+    {
+        Log.v(LOG_TAG, "restoreAlbumsFromState");
+        _adapter.clear();
+        _adapter.addAll(_tracks);
+        _listView.onRestoreInstanceState(_listState);
+        checkTracksForEmpty();
+    }
+
+    private void loadAlbumsFromSpotify()
+    {
+        Log.v(LOG_TAG, "loadAlbumsFromSpotify");
+
+        SpotifyService spotify = getSpotifyService();
+        Map<String, Object> options = getSpotifyOptions();
+        Callback<Tracks> callback = getTracksCallback();
+
+        spotify.getArtistTopTrack(_artistId, options, callback);
+    }
+
+    private SpotifyService getSpotifyService()
+    {
+        Log.v(LOG_TAG, "getSpotifyService");
+        SpotifyApi api = new SpotifyApi();
+        return api.getService();
+    }
+
+    private Map<String, Object> getSpotifyOptions()
+    {
+        Log.v(LOG_TAG, "getSpotifyOptions");
+        Map<String, Object> options = new HashMap<>();
+        options.put("country", "US");
+        return options;
+    }
+
+    private Callback<Tracks> getTracksCallback()
+    {
+        Log.v(LOG_TAG, "getTracksCallback");
+        return new Callback<Tracks>()
+        {
+            @Override
+            public void success(Tracks tracks, Response response)
+            {
+                _adapter.clear();
+                _tracks.clear();
+                if (tracks != null
+                        && tracks.tracks != null
+                        && tracks.tracks.size() > 0)
+                {
+                    for (Track track : tracks.tracks)
+                    {
+                        _tracks.add(new TrackParcelable(track));
+                    }
+                    _adapter.addAll(_tracks);
+                }
+                checkTracksForEmpty();
+            }
+
+            @Override
+            public void failure(RetrofitError ex)
+            {
+                //
+                Log.e(LOG_TAG, ex.getMessage());
+            }
+        };
+    }
+
+    private boolean isArtistIdValid()
+    {
+        Log.v(LOG_TAG, "isArtistIdValid");
+        return _artistId.length() > 0;
     }
 
     private void checkTracksForEmpty()
@@ -200,13 +282,22 @@ public class ArtistTop10Fragment extends Fragment
 
     public void onTrackSelected(int position)
     {
+        Log.v(LOG_TAG, "onTrackSelected");
+
         _currentTrack = position;
+        Intent intent = createPlayerIntent();
+        startActivity(intent);
+    }
+
+    private Intent createPlayerIntent()
+    {
+        Log.v(LOG_TAG, "createPlayerIntent");
         Intent intent = new Intent(getActivity(), PlayerActivity.class);
         Bundle extras = new Bundle();
         extras.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
         extras.putInt(getString(R.string.bundle_current_track), _currentTrack);
         intent.putExtras(extras);
-        startActivity(intent);
+        return intent;
     }
 
 }

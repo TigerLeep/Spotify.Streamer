@@ -27,8 +27,6 @@ public class PlayerFragment extends DialogFragment
     private Button _previousButton;
     private Button _nextButton;
 
-    private ServiceConnection _playerConnection = null;
-    private PlayerService _playerService = null;
     private ArrayList<TrackParcelable> _tracks = null;
     private int _currentTrack = 0;
 
@@ -63,29 +61,6 @@ public class PlayerFragment extends DialogFragment
                 _textView.setText("Next");
             }
         });
-
-        _playerConnection = new ServiceConnection()
-        {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service)
-            {
-                Log.v(LOG_TAG, "onServiceConnected");
-
-                if(_playerService == null)
-                {
-                    PlayerService.PlayerBinder binder = (PlayerService.PlayerBinder)service;
-                    _playerService = binder.GetService();
-                    _playerService.SetTracks(_tracks);
-                }
-
-                _playerService.PlayTrack(_currentTrack);
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                Log.v(LOG_TAG, "onServiceDisconnected");
-            }
-        };
 
         return view;
     }

@@ -2,6 +2,7 @@ package com.tigerbase.spotifystreamer.ArtistSearch;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -104,7 +105,8 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
     }
 
     @Override
-    public void onArtistSelected(String id, String name) {
+    public void onArtistSelected(String id, String name)
+    {
         Log.v(LOG_TAG, "onArtistSelected: id=[" + id + "], name=[" + name + "]");
         if(!_twoPane)
         {
@@ -116,18 +118,21 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
         }
     }
 
-    private void initializeOnePane() {
+
+    private void initializeOnePane()
+    {
+        Log.v(LOG_TAG, "initializeOnePane");
         _twoPane = false;
-        Log.v(LOG_TAG, "onCreate - _twoPane = false");
         getSupportActionBar().setElevation(0f);
     }
 
-    private void initializeTwoPane(Bundle savedInstanceState) {
+    private void initializeTwoPane(Bundle savedInstanceState)
+    {
+        Log.v(LOG_TAG, "initializeTwoPane");
         _twoPane = true;
-        Log.v(LOG_TAG, "onCreate - _twoPane = true");
         if (savedInstanceState == null)
         {
-            Log.v(LOG_TAG, "onCreate - savedInstanceState == null");
+            Log.v(LOG_TAG, "initializeTwoPane - savedInstanceState == null");
             ArtistTop10Fragment top10Fragment = new ArtistTop10Fragment();
             getSupportFragmentManager()
                     .beginTransaction()
@@ -138,8 +143,9 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
         }
     }
 
-    private void informArtistTop10FragmentArtistChanged(String id, String name) {
-        Log.v(LOG_TAG, "onArtistSelected: _twoPane");
+    private void informArtistTop10FragmentArtistChanged(String id, String name)
+    {
+        Log.v(LOG_TAG, "informArtistTop10FragmentArtistChanged");
         ArtistTop10Fragment top10Fragment = (ArtistTop10Fragment)getSupportFragmentManager()
                 .findFragmentByTag(TOP10FRAGMENT_TAG);
         if(top10Fragment != null)
@@ -148,14 +154,23 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
         }
     }
 
-    private void launchArtistTop10Activity(String id, String name) {
-        Log.v(LOG_TAG, "onForecastSelected: !_twoPane");
+    private void launchArtistTop10Activity(String id, String name)
+    {
+        Log.v(LOG_TAG, "launchArtistTop10Activity");
+
+        Intent intent = createArtistTop10Intent(id, name);
+        startActivity(intent);
+    }
+
+    private Intent createArtistTop10Intent(String id, String name)
+    {
+        Log.v(LOG_TAG, "createArtistTop10Intent");
         Intent intent = new Intent(this, ArtistTop10Activity.class);
         Bundle extras = new Bundle();
         extras.putString(getString(R.string.intent_extra_artist_id), id);
         extras.putString(getString(R.string.intent_extra_artist_name), name);
         intent.putExtras(extras);
-        startActivity(intent);
+        return intent;
     }
 
 }
