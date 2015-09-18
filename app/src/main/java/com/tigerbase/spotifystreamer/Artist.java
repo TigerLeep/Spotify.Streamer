@@ -4,29 +4,28 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
-import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.Image;
 
-public class ArtistParcelable implements Parcelable
+public class Artist implements Parcelable
 {
-    private final static String LOG_TAG = ArtistParcelable.class.getSimpleName();
+    private final static String LOG_TAG = Artist.class.getSimpleName();
 
     public String Id = "";
     public String Name = "";
     public String ThumbnailImageUrl = "";
 
-    public ArtistParcelable()
+    public Artist()
     {
     }
 
-    public ArtistParcelable(String id, String name, String thumbnailImageUrl)
+    public Artist(String id, String name, String thumbnailImageUrl)
     {
         Id = id;
         Name = name;
         ThumbnailImageUrl = thumbnailImageUrl;
     }
 
-    public ArtistParcelable(Artist artist)
+    public Artist(kaaes.spotify.webapi.android.models.Artist artist)
     {
         Id = artist.id;
         Name = artist.name;
@@ -40,13 +39,13 @@ public class ArtistParcelable implements Parcelable
         return 0;
     }
 
-    public static final Parcelable.Creator<ArtistParcelable> CREATOR =
-            new Parcelable.Creator<ArtistParcelable>()
+    public static final Parcelable.Creator<Artist> CREATOR =
+            new Parcelable.Creator<Artist>()
             {
-                public ArtistParcelable createFromParcel(Parcel in)
+                public Artist createFromParcel(Parcel in)
                 {
                     Log.v(LOG_TAG, "CREATOR.createFromParcel");
-                    ArtistParcelable artist = new ArtistParcelable();
+                    Artist artist = new Artist();
                     artist.Id = in.readString();
                     artist.Name = in.readString();
                     artist.ThumbnailImageUrl = in.readString();
@@ -54,10 +53,10 @@ public class ArtistParcelable implements Parcelable
                 }
 
                 @Override
-                public ArtistParcelable[] newArray(int size)
+                public Artist[] newArray(int size)
                 {
                     Log.v(LOG_TAG, "CREATOR.newArray");
-                    return new ArtistParcelable[size];
+                    return new Artist[size];
                 }
             };
 
@@ -70,7 +69,7 @@ public class ArtistParcelable implements Parcelable
         dest.writeString(ThumbnailImageUrl);
     }
 
-    private String getThumbnailImageUrl(Artist artist)
+    private String getThumbnailImageUrl(kaaes.spotify.webapi.android.models.Artist artist)
     {
         Log.v(LOG_TAG, "getThumbnailImageUrl");
         String thumbnailImageUrl = "";

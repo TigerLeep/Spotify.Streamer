@@ -2,31 +2,28 @@ package com.tigerbase.spotifystreamer.ArtistSearch;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.tigerbase.spotifystreamer.ArtistParcelable;
+import com.tigerbase.spotifystreamer.Artist;
 import com.tigerbase.spotifystreamer.R;
 
 import java.util.ArrayList;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import retrofit.RetrofitError;
 
-public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistParcelable>>
+public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
 {
     private final static String LOG_TAG = ArtistSearchTask.class.getSimpleName();
 
-    private ArrayList<ArtistParcelable> _artists = null;
+    private ArrayList<Artist> _artists = null;
     private ArtistAdapter _adapter;
     private Context _context;
 
-    public ArtistSearchTask(ArrayList<ArtistParcelable> artists,
+    public ArtistSearchTask(ArrayList<Artist> artists,
                             ArtistAdapter adapter,
                             Context context
                             )
@@ -37,7 +34,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
     }
 
     @Override
-    protected ArrayList<ArtistParcelable> doInBackground(String... params)
+    protected ArrayList<Artist> doInBackground(String... params)
     {
         Log.v(LOG_TAG, "doInBackground");
 
@@ -59,7 +56,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
     }
 
     @Override
-    protected void onPostExecute(ArrayList<ArtistParcelable> artists)
+    protected void onPostExecute(ArrayList<Artist> artists)
     {
         Log.v(LOG_TAG, "onPostExecute");
 
@@ -119,20 +116,20 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
         return param.replace(" ", "* ") + "*";
     }
 
-    private ArrayList<ArtistParcelable> getArtistParcelablesFromArtistsPager(ArtistsPager artistsPager)
+    private ArrayList<Artist> getArtistParcelablesFromArtistsPager(ArtistsPager artistsPager)
     {
-        ArrayList<ArtistParcelable> artists = new ArrayList<>();
+        ArrayList<Artist> artists = new ArrayList<>();
         if (artistsPager != null)
         {
-            for(Artist artist : artistsPager.artists.items)
+            for(kaaes.spotify.webapi.android.models.Artist artist : artistsPager.artists.items)
             {
-                artists.add(new ArtistParcelable(artist));
+                artists.add(new Artist(artist));
             }
         }
         return artists;
     }
 
-    private void loadArtists(ArrayList<ArtistParcelable> artists)
+    private void loadArtists(ArrayList<Artist> artists)
     {
         _artists.clear();
         _adapter.clear();
@@ -141,7 +138,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<ArtistPa
         _adapter.addAll(artists);
     }
 
-    private void showMessageIfNoArtistsFound(ArrayList<ArtistParcelable> artists)
+    private void showMessageIfNoArtistsFound(ArrayList<Artist> artists)
     {
         if (artists == null || artists.isEmpty())
         {

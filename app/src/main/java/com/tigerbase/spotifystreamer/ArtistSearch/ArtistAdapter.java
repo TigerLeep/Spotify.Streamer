@@ -10,12 +10,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.tigerbase.spotifystreamer.ArtistParcelable;
+import com.tigerbase.spotifystreamer.Artist;
 import com.tigerbase.spotifystreamer.R;
 
 import java.util.ArrayList;
 
-public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
+public class ArtistAdapter extends ArrayAdapter<Artist>
 {
     private final String LOG_TAG = ArtistAdapter.class.getSimpleName();
 
@@ -24,7 +24,7 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
         super(context, textViewResourceId);
     }
 
-    public ArtistAdapter(Context context, int resource, ArrayList<ArtistParcelable> artists)
+    public ArtistAdapter(Context context, int resource, ArrayList<Artist> artists)
     {
         super(context, resource, artists);
     }
@@ -38,7 +38,7 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
                 ? getArtistListItemViewFromLayout(parent)
                 : convertView;
 
-        ArtistParcelable artist = getItem(position);
+        Artist artist = getItem(position);
         loadArtistListItemView(artistListItemView, artist);
 
         return artistListItemView;
@@ -54,7 +54,7 @@ public class ArtistAdapter extends ArrayAdapter<ArtistParcelable>
         return view;
     }
 
-    private void loadArtistListItemView(View artistListItemView, ArtistParcelable artist)
+    private void loadArtistListItemView(View artistListItemView, Artist artist)
     {
         if (artist != null)
         {

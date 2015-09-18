@@ -14,7 +14,7 @@ import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import com.tigerbase.spotifystreamer.ArtistParcelable;
+import com.tigerbase.spotifystreamer.Artist;
 import com.tigerbase.spotifystreamer.IArtistList;
 import com.tigerbase.spotifystreamer.R;
 
@@ -29,7 +29,7 @@ public class ArtistSearchFragment extends Fragment
     private final String LIST_VIEW_STATE_TAG = "ListView";
 
     private String _artistPartialName = "";
-    private ArrayList<ArtistParcelable> _artists = null;
+    private ArrayList<Artist> _artists = null;
     private ArtistAdapter _adapter = null;
     private ArtistSearchTask _artistSearchTask = null;
     private Boolean _wasStateLoadedFromSavedState = false;
@@ -68,7 +68,7 @@ public class ArtistSearchFragment extends Fragment
         _adapter = new ArtistAdapter(
                 getActivity(),
                 R.layout.list_item_artist,
-                new ArrayList<ArtistParcelable>());
+                new ArrayList<Artist>());
     }
 
     private void initializeArtistSearchList(View rootView)
@@ -79,7 +79,7 @@ public class ArtistSearchFragment extends Fragment
         _listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                ArtistParcelable artist = _adapter.getItem(position);
+                Artist artist = _adapter.getItem(position);
                 if (getActivity() instanceof IArtistList) {
                     Log.v(LOG_TAG, "instanceof IArtistList");
                     ((IArtistList) getActivity()).onArtistSelected(artist.Id, artist.Name);

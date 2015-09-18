@@ -1,12 +1,8 @@
 package com.tigerbase.spotifystreamer.Player;
 
 import android.app.Dialog;
-import android.content.ComponentName;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v4.app.DialogFragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +11,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.tigerbase.spotifystreamer.R;
-import com.tigerbase.spotifystreamer.TrackParcelable;
+import com.tigerbase.spotifystreamer.Track;
 
 import java.util.ArrayList;
 
@@ -27,7 +23,7 @@ public class PlayerFragment extends DialogFragment
     private Button _previousButton;
     private Button _nextButton;
 
-    private ArrayList<TrackParcelable> _tracks = null;
+    private ArrayList<Track> _tracks = null;
     private int _currentTrack = 0;
 
     @Override

@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 import com.tigerbase.spotifystreamer.Player.PlayerActivity;
 import com.tigerbase.spotifystreamer.R;
-import com.tigerbase.spotifystreamer.TrackParcelable;
+import com.tigerbase.spotifystreamer.Track;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,7 +24,6 @@ import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 import retrofit.Callback;
 import retrofit.RetrofitError;
@@ -41,7 +40,7 @@ public class ArtistTop10Fragment extends Fragment
 
     private String _artistId = "";
     private String _artistName = "";
-    private ArrayList<TrackParcelable> _tracks = null;
+    private ArrayList<Track> _tracks = null;
     private int _currentTrack = 0;
     private ArtistTop10Adapter _adapter = null;
     private Boolean _isStateBeingLoadedFromSavedState = false;
@@ -94,7 +93,7 @@ public class ArtistTop10Fragment extends Fragment
         _adapter = new ArtistTop10Adapter(
                 getActivity(),
                 R.layout.list_item_artist_top10,
-                new ArrayList<TrackParcelable>());
+                new ArrayList<Track>());
     }
 
     private void initializeArtistTop10List(View rootView)
@@ -230,18 +229,15 @@ public class ArtistTop10Fragment extends Fragment
         return new Callback<Tracks>()
         {
             @Override
-            public void success(Tracks tracks, Response response)
+            public void success(Tracks spotifyTracks, Response response)
             {
                 _adapter.clear();
                 _tracks.clear();
-                if (tracks != null
-                        && tracks.tracks != null
-                        && tracks.tracks.size() > 0)
+                if (spotifyTracks != null
+                        && spotifyTracks.tracks != null
+                        && spotifyTracks.tracks.size() > 0)
                 {
-                    for (Track track : tracks.tracks)
-                    {
-                        _tracks.add(new TrackParcelable(track));
-                    }
+                    loadTracksFromSpotifyTracks(spotifyTracks);
                     _adapter.addAll(_tracks);
                 }
                 checkTracksForEmpty();
@@ -254,6 +250,16 @@ public class ArtistTop10Fragment extends Fragment
                 Log.e(LOG_TAG, ex.getMessage());
             }
         };
+    }
+
+    private void loadTracksFromSpotifyTracks(Tracks spotifyTracks)
+    {
+        for (kaaes.spotify.webapi.android.models.Track spotifyTrack : spotifyTracks.tracks)
+        {
+            Track track = new Track(spotifyTrack);
+            track.ArtistName = _artistName;
+            _tracks.add(track);
+        }
     }
 
     private boolean isArtistIdValid()

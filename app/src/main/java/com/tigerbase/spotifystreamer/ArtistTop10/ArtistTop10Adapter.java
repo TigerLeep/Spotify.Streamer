@@ -11,11 +11,11 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.tigerbase.spotifystreamer.R;
-import com.tigerbase.spotifystreamer.TrackParcelable;
+import com.tigerbase.spotifystreamer.Track;
 
 import java.util.ArrayList;
 
-public class ArtistTop10Adapter extends ArrayAdapter<TrackParcelable>
+public class ArtistTop10Adapter extends ArrayAdapter<Track>
 {
     private final static String LOG_TAG = ArtistTop10Adapter.class.getSimpleName();
 
@@ -24,7 +24,7 @@ public class ArtistTop10Adapter extends ArrayAdapter<TrackParcelable>
         super(context, textViewResourceId);
     }
 
-    public ArtistTop10Adapter(Context context, int resource, ArrayList<TrackParcelable> artists)
+    public ArtistTop10Adapter(Context context, int resource, ArrayList<Track> artists)
     {
         super(context, resource, artists);
     }
@@ -41,7 +41,7 @@ public class ArtistTop10Adapter extends ArrayAdapter<TrackParcelable>
             view = inflater.inflate(R.layout.list_item_artist_top10, parent, false);
         }
 
-        TrackParcelable track = getItem(position);
+        Track track = getItem(position);
 
         if (track != null)
         {

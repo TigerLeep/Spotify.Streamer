@@ -9,9 +9,14 @@ import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
-// The follow sample was used to learn how to implement services to facilitate audio playback.
+import com.tigerbase.spotifystreamer.Track;
+
+import java.util.ArrayList;
+
+// The follow sample was used to learn how to implement a service to facilitate audio playback.
 // https://android.googlesource.com/platform/development/+/master/samples/RandomMusicPlayer/
 public class PlayerService
         extends Service
@@ -21,7 +26,6 @@ public class PlayerService
     private final static String LOG_TAG = PlayerService.class.getSimpleName();
     private final static String WIFI_LOCK_TAG = "WifiLock";
 
-    private final static String ACTION_TOGGLE = "com.tigerbase.spotifystreamer.toggle";
     private final static String ACTION_PLAY = "com.tigerbase.spotifystreamer.play";
     private final static String ACTION_PAUSE = "com.tigerbase.spotifystreamer.pause";
     private final static String ACTION_PREVIOUS_TRACK = "com.tigerbase.spotifystreamer.previous_track";
@@ -29,21 +33,26 @@ public class PlayerService
     private final static String ACTION_STOP = "com.tigerbase.spotifystreamer.stop";
     private final static String ACTION_REWIND = "com.tigerbase.spotifystreamer.rewind";
 
+    private AudioManager _audioManager;
+    private MediaPlayer _mediaPlayer;
+
     private WifiLock _wifiLock;
-    AudioManager _audioManager;
-    NotificationManager _notificationManager;
-    AudioFocus _audioFocus;
+    private AudioFocus _audioFocus;
+    private ServiceMode _serviceMode;
+
+    private ArrayList<Track> _tracks;
+    private int _currentTrack;
 
     @Override
     public void onCreate()
     {
         Log.v(LOG_TAG, "onCreate");
 
-        WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
-        _wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_TAG);
+        initializeWifiLock();
 
         _audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        _notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        initializeMediaPlayerIfNeeded();
 
         _audioFocus = AudioFocus.NotFocused;
 
@@ -55,9 +64,6 @@ public class PlayerService
         String action = intent.getAction();
         switch (action)
         {
-            case ACTION_TOGGLE:
-                togglePlayback();
-                break;
             case ACTION_PLAY:
                 startPlayback();
                 break;
@@ -122,14 +128,76 @@ public class PlayerService
         return null;
     }
 
-    private void togglePlayback()
+    public void setTracks(ArrayList<Track> tracks)
     {
+        _tracks = tracks;
+    }
 
+    public ArrayList<Track> getTracks()
+    {
+        return _tracks;
+    }
+
+    public void setCurrentTrack(String trackId)
+    {
+        for (int index = 0; index < _tracks.size(); index++)
+        {
+            if(_tracks.get(index).Id == trackId)
+            {
+                _currentTrack = index;
+            }
+        }
+    }
+
+
+    private void initializeWifiLock()
+    {
+        WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        _wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_TAG);
+    }
+
+    private void initializeMediaPlayerIfNeeded()
+    {
+        if (_mediaPlayer == null)
+        {
+            _mediaPlayer = new MediaPlayer();
+
+            _mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+            _mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+
+            _mediaPlayer.setOnPreparedListener(this);
+            _mediaPlayer.setOnCompletionListener(this);
+            _mediaPlayer.setOnErrorListener(this);
+        }
+        else
+        {
+            _mediaPlayer.reset();
+        }
+    }
+
+    private void tryToGetAudioFocus()
+    {
+        if (_audioFocus != AudioFocus.Focused)
+        {
+            int status = _audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            if (status == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+            {
+                _audioFocus = AudioFocus.Focused;
+            }
+        }
     }
 
     private void startPlayback()
     {
-
+        if (_serviceMode == ServiceMode.Paused)
+        {
+            // Resume playback
+        }
+        else if (_serviceMode == ServiceMode.Stopped)
+        {
+            tryToGetAudioFocus();
+            
+        }
     }
 
     private void pausePlayback()

@@ -6,23 +6,23 @@ import android.util.Log;
 
 import kaaes.spotify.webapi.android.models.AlbumSimple;
 import kaaes.spotify.webapi.android.models.Image;
-import kaaes.spotify.webapi.android.models.Track;
 
-public class TrackParcelable implements Parcelable
+public class Track implements Parcelable
 {
-    private final static String LOG_TAG = TrackParcelable.class.getSimpleName();
+    private final static String LOG_TAG = Track.class.getSimpleName();
 
     public String Id = "";
     public String Name = "";
     public String ThumbnailImageUrl = "";
     public String AlbumName = "";
+    public String ArtistName = "";
     public String PreviewUrl = "";
 
-    public TrackParcelable()
+    public Track()
     {
     }
 
-    public TrackParcelable(Track track)
+    public Track(kaaes.spotify.webapi.android.models.Track track)
     {
         PreviewUrl = track.preview_url;
         Id = track.id;
@@ -41,13 +41,13 @@ public class TrackParcelable implements Parcelable
         return 0;
     }
 
-    public static final Creator<TrackParcelable> CREATOR =
-            new Creator<TrackParcelable>()
+    public static final Creator<Track> CREATOR =
+            new Creator<Track>()
             {
-                public TrackParcelable createFromParcel(Parcel in)
+                public Track createFromParcel(Parcel in)
                 {
                     Log.v(LOG_TAG, "CREATOR.createFromParcel");
-                    TrackParcelable track = new TrackParcelable();
+                    Track track = new Track();
                     track.Id = in.readString();
                     track.Name = in.readString();
                     track.ThumbnailImageUrl = in.readString();
@@ -57,10 +57,10 @@ public class TrackParcelable implements Parcelable
                 }
 
                 @Override
-                public TrackParcelable[] newArray(int size)
+                public Track[] newArray(int size)
                 {
                     Log.v(LOG_TAG, "CREATOR.newArray");
-                    return new TrackParcelable[size];
+                    return new Track[size];
                 }
             };
 
