@@ -1,6 +1,8 @@
 package com.tigerbase.spotifystreamer.Player;
 
+import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -12,8 +14,11 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.util.Log;
 
+import com.tigerbase.spotifystreamer.ArtistSearch.ArtistSearchActivity;
+import com.tigerbase.spotifystreamer.R;
 import com.tigerbase.spotifystreamer.Track;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 // The follow sample was used to learn how to implement a service to facilitate audio playback.
@@ -23,17 +28,22 @@ public class PlayerService
         implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
                    MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener
 {
-    private final static String LOG_TAG = PlayerService.class.getSimpleName();
-    private final static String WIFI_LOCK_TAG = "WifiLock";
+    private static final String LOG_TAG = PlayerService.class.getSimpleName();
+    private static final String WIFI_LOCK_TAG = "WifiLock";
 
-    private final static String ACTION_PLAY = "com.tigerbase.spotifystreamer.play";
-    private final static String ACTION_PAUSE = "com.tigerbase.spotifystreamer.pause";
-    private final static String ACTION_PREVIOUS_TRACK = "com.tigerbase.spotifystreamer.previous_track";
-    private final static String ACTION_NEXT_TRACK = "com.tigerbase.spotifystreamer.next_track";
-    private final static String ACTION_STOP = "com.tigerbase.spotifystreamer.stop";
-    private final static String ACTION_REWIND = "com.tigerbase.spotifystreamer.rewind";
+    private static final String ACTION_PLAY = "com.tigerbase.spotifystreamer.play";
+    private static final String ACTION_PAUSE = "com.tigerbase.spotifystreamer.pause";
+    private static final String ACTION_PREVIOUS_TRACK = "com.tigerbase.spotifystreamer.previous_track";
+    private static final String ACTION_NEXT_TRACK = "com.tigerbase.spotifystreamer.next_track";
+    private static final String ACTION_STOP = "com.tigerbase.spotifystreamer.stop";
+    private static final String ACTION_REWIND = "com.tigerbase.spotifystreamer.rewind";
+
+    private static final int NOTIFICATION_ID = 1;
+    private static final float DUCK_VOLUME = 0.1f;
 
     private AudioManager _audioManager;
+    private NotificationManager _notificationManager;
+    private Notification _notification;
     private MediaPlayer _mediaPlayer;
 
     private WifiLock _wifiLock;
@@ -51,6 +61,7 @@ public class PlayerService
         initializeWifiLock();
 
         _audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        _notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         initializeMediaPlayerIfNeeded();
 
@@ -119,7 +130,9 @@ public class PlayerService
     @Override
     public void onPrepared(MediaPlayer mp)
     {
-
+        _serviceMode = ServiceMode.Playing;
+        updateExistingNotification(_tracks.get(_currentTrack).Name + " (Playing)");
+        configureAndStartMediaPlayer();
     }
 
     @Override
@@ -175,7 +188,7 @@ public class PlayerService
         }
     }
 
-    private void tryToGetAudioFocus()
+    private void requestAudioFocus()
     {
         if (_audioFocus != AudioFocus.Focused)
         {
@@ -187,22 +200,60 @@ public class PlayerService
         }
     }
 
+    private void releaseAudioFocus()
+    {
+        if (_audioFocus == AudioFocus.Focused)
+        {
+            int status = _audioManager.abandonAudioFocus(this);
+            if (status == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+            {
+                _audioFocus = AudioFocus.NotFocused;
+            }
+        }
+    }
+
     private void startPlayback()
     {
         if (_serviceMode == ServiceMode.Paused)
         {
-            // Resume playback
+            requestAudioFocus();
+            _serviceMode = ServiceMode.Playing;
+            bringServiceToForeground(getPlayingNotificationMessage());
+            configureAndStartMediaPlayer();
         }
         else if (_serviceMode == ServiceMode.Stopped)
         {
-            tryToGetAudioFocus();
-            
+            requestAudioFocus();
+            releaseAllResourcesExceptMediaPlayer();
+            try
+            {
+                initializeMediaPlayerIfNeeded();
+                Track track = getCurrentTrack();
+                if(track != null)
+                {
+                    _mediaPlayer.setDataSource(track.PreviewUrl);
+                }
+                _serviceMode = ServiceMode.Buffering;
+                bringServiceToForeground(getBufferingNotificationMessage());
+                _mediaPlayer.prepareAsync();
+                _wifiLock.acquire();
+            }
+            catch (IOException ex)
+            {
+                Log.e(LOG_TAG, ex.getMessage());
+                ex.printStackTrace();
+            }
         }
     }
 
     private void pausePlayback()
     {
-
+        if (_serviceMode == ServiceMode.Playing)
+        {
+            _serviceMode = ServiceMode.Paused;
+            _mediaPlayer.pause();
+            releaseAllResourcesExceptMediaPlayer();
+        }
     }
 
     private void duckPlayback()
@@ -212,7 +263,13 @@ public class PlayerService
 
     private void stopPlayback()
     {
-
+        if(_serviceMode == ServiceMode.Playing || _serviceMode == ServiceMode.Paused)
+        {
+            _serviceMode = ServiceMode.Stopped;
+            releaseAllResources();
+            releaseAudioFocus();
+            
+        }
     }
 
     private void previousTrack()
@@ -229,5 +286,134 @@ public class PlayerService
     {
 
     }
+
+    private void releaseAllResources()
+    {
+        releaseAllResourcesExceptMediaPlayer();
+        releaseMediaPlayer();
+    }
+
+    private void releaseAllResourcesExceptMediaPlayer()
+    {
+        stopForeground(true);
+
+        if (_wifiLock.isHeld())
+        {
+            _wifiLock.release();
+        }
+    }
+
+    private void releaseMediaPlayer()
+    {
+        _mediaPlayer.reset();
+        _mediaPlayer.release();
+        _mediaPlayer = null;
+    }
+
+    private void updateExistingNotification(String notificationText)
+    {
+        Intent intent = new Intent(getApplicationContext(), ArtistSearchActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        _notification.setLatestEventInfo(getApplicationContext(), "Spotify Streamer", notificationText, pendingIntent);
+        _notificationManager.notify(NOTIFICATION_ID, _notification);
+    }
+
+    private void createNewNotification(String notificationText)
+    {
+        Intent intent = new Intent(getApplicationContext(), ArtistSearchActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        _notification = new Notification();
+        _notification.tickerText = notificationText;
+        _notification.icon = android.R.drawable.ic_media_play;
+        _notification.flags |= Notification.FLAG_ONGOING_EVENT;
+        _notification.setLatestEventInfo(getApplicationContext(), "Spotify Streamer", notificationText, pendingIntent);
+    }
+
+    private void configureAndStartMediaPlayer()
+    {
+        if (_audioFocus == AudioFocus.NotFocused)
+        {
+            pauseMediaPlayerIfPlaying();
+            return;
+        }
+        if (_audioFocus == AudioFocus.Ducked)
+        {
+            setVolumeToLow();
+            return;
+        }
+
+        setVolumeToFull();
+        startMediaPlayerIfNotPlaying();
+    }
+
+    private void startMediaPlayerIfNotPlaying()
+    {
+        if (!_mediaPlayer.isPlaying())
+        {
+            _mediaPlayer.start();
+        }
+    }
+
+    private void pauseMediaPlayerIfPlaying()
+    {
+        if (_mediaPlayer.isPlaying())
+        {
+            _mediaPlayer.pause();
+        }
+    }
+
+    private void setVolumeToLow()
+    {
+        //
+        _mediaPlayer.setVolume(DUCK_VOLUME, DUCK_VOLUME);
+    }
+
+    private void setVolumeToFull()
+    {
+        //
+        _mediaPlayer.setVolume(1.0f, 1.0f);
+    }
+
+    private void bringServiceToForeground(String notificationText)
+    {
+        createNewNotification(notificationText);
+        startForeground(NOTIFICATION_ID, _notification);
+    }
+
+    private String getPlayingNotificationMessage()
+    {
+        return getNotificationMessage(getString(R.string.notification_playing_message));
+    }
+
+    private String getBufferingNotificationMessage()
+    {
+        return getNotificationMessage(getString(R.string.notification_buffering_message));
+    }
+
+    private String getNotificationMessage(String notificationFormatText)
+    {
+        Track track = getCurrentTrack();
+        if(track == null)
+        {
+            return "";
+        }
+        return String.format(notificationFormatText, track.Name);
+    }
+
+    private boolean isCurrentTrackValid()
+    {
+        return !(_tracks == null || _currentTrack < 0 || _currentTrack >= _tracks.size());
+    }
+
+    private Track getCurrentTrack()
+    {
+        if (!isCurrentTrackValid())
+        {
+            return null;
+        }
+        return _tracks.get(_currentTrack);
+    }
+
+
 
 }
