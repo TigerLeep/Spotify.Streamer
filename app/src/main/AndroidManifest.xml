@@ -41,7 +41,19 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ArtistTop10.ArtistTop10Activity" />
         </activity>
-        <service android:name=".Player.PlayerService" />
+        <service
+            android:name=".Player.PlayerService"
+            android:exported="false"
+            android:stopWithTask="true">
+            <intent-filter>
+                <action android:name="com.tigerbase.spotifystreamer.play"/>
+                <action android:name="com.tigerbase.spotifystreamer.pause"/>
+                <action android:name="com.tigerbase.spotifystreamer.previous_track"/>
+                <action android:name="com.tigerbase.spotifystreamer.next_track"/>
+                <action android:name="com.tigerbase.spotifystreamer.stop"/>
+                <action android:name="com.tigerbase.spotifystreamer.rewind"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

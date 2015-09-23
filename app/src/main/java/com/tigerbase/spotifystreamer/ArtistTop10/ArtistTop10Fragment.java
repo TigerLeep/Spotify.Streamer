@@ -15,6 +15,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.tigerbase.spotifystreamer.Player.PlayerActivity;
+import com.tigerbase.spotifystreamer.Player.PlayerFragment;
 import com.tigerbase.spotifystreamer.R;
 import com.tigerbase.spotifystreamer.Track;
 
@@ -33,10 +34,12 @@ public class ArtistTop10Fragment extends Fragment
 {
     private final static String LOG_TAG = ArtistTop10Fragment.class.getSimpleName();
 
+    private final String TWOPANE_TAG = "TwoPane";
     private final String ARTIST_ID_STATE_TAG = "ArtistId";
     private final String ARTIST_NAME_STATE_TAG = "ArtistName";
     private final String TRACKS_STATE_TAG = "Tracks";
     private final String LIST_VIEW_STATE_TAG = "ListView";
+    private final String PLAYER_DIALOG_TAG = PlayerFragment.class.getSimpleName();
 
     private String _artistId = "";
     private String _artistName = "";
@@ -46,6 +49,7 @@ public class ArtistTop10Fragment extends Fragment
     private Boolean _isStateBeingLoadedFromSavedState = false;
     private ListView _listView = null;
     private Parcelable _listState = null;
+    private boolean _twoPane = false;
 
     public ArtistTop10Fragment()
     {
@@ -80,6 +84,7 @@ public class ArtistTop10Fragment extends Fragment
     {
         Log.v(LOG_TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
+        outState.putBoolean(TWOPANE_TAG, _twoPane);
         outState.putString(ARTIST_ID_STATE_TAG, _artistId);
         outState.putString(ARTIST_NAME_STATE_TAG, _artistName);
         outState.putParcelableArrayList(TRACKS_STATE_TAG, _tracks);
@@ -102,9 +107,11 @@ public class ArtistTop10Fragment extends Fragment
         _listView = (ListView)rootView.findViewById(R.id.artist_top10_list);
         _listView.setAdapter(_adapter);
 
-        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        _listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
+            {
                 onTrackSelected(position);
             }
         });
@@ -139,7 +146,8 @@ public class ArtistTop10Fragment extends Fragment
     {
         Log.v(LOG_TAG, "initializeStateWithIntent");
         Bundle extras = intent.getExtras();
-        if(extras != null)
+        _twoPane = (extras == null);
+        if(!_twoPane)
         {
             Log.v(LOG_TAG, "initializeStateWithIntent: extras != null");
             _artistId = extras.getString(getString(R.string.intent_extra_artist_id));
@@ -150,6 +158,7 @@ public class ArtistTop10Fragment extends Fragment
     private void initializeStateWithSavedState(Bundle savedInstanceState)
     {
         Log.v(LOG_TAG, "initializeStateWithSavedState");
+        _twoPane = savedInstanceState.getBoolean(TWOPANE_TAG);
         _artistId = savedInstanceState.getString(ARTIST_ID_STATE_TAG);
         _artistName = savedInstanceState.getString(ARTIST_NAME_STATE_TAG);
         _tracks = savedInstanceState.getParcelableArrayList(TRACKS_STATE_TAG);
@@ -291,19 +300,36 @@ public class ArtistTop10Fragment extends Fragment
         Log.v(LOG_TAG, "onTrackSelected");
 
         _currentTrack = position;
-        Intent intent = createPlayerIntent();
-        startActivity(intent);
+
+        if (!_twoPane)
+        {
+            Intent intent = createPlayerIntent();
+            startActivity(intent);
+        }
+        else
+        {
+            PlayerFragment dialog = new PlayerFragment();
+            Bundle bundle = createPlayerBundle();
+            dialog.setArguments(bundle);
+            dialog.show(getActivity().getSupportFragmentManager(), PLAYER_DIALOG_TAG);
+        }
     }
 
     private Intent createPlayerIntent()
     {
         Log.v(LOG_TAG, "createPlayerIntent");
         Intent intent = new Intent(getActivity(), PlayerActivity.class);
-        Bundle extras = new Bundle();
-        extras.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
-        extras.putInt(getString(R.string.bundle_current_track), _currentTrack);
+        Bundle extras = createPlayerBundle();
         intent.putExtras(extras);
         return intent;
     }
 
+    private Bundle createPlayerBundle()
+    {
+        Log.v(LOG_TAG, "createPlayerBundle");
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
+        bundle.putInt(getString(R.string.bundle_current_track), _currentTrack);
+        return bundle;
+    }
 }

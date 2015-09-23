@@ -268,7 +268,7 @@ public class PlayerService
             _serviceMode = ServiceMode.Stopped;
             releaseAllResources();
             releaseAudioFocus();
-            
+
         }
     }
 

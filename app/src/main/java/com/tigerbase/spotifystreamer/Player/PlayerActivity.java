@@ -1,10 +1,14 @@
 package com.tigerbase.spotifystreamer.Player;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.tigerbase.spotifystreamer.R;
+import com.tigerbase.spotifystreamer.Track;
+
+import java.util.ArrayList;
 
 
 public class PlayerActivity extends AppCompatActivity
@@ -21,12 +25,24 @@ public class PlayerActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
 
+        Intent intent = getIntent();
+        Bundle bundle = new Bundle();
+        if (intent != null)
+        {
+            ArrayList<Track> tracks = intent.getParcelableArrayListExtra(getString(R.string.bundle_tracks));
+            int currentTrack = intent.getIntExtra(getString(R.string.bundle_current_track), 0);
+
+            bundle.putParcelableArrayList(getString(R.string.bundle_tracks), tracks);
+            bundle.putInt(getString(R.string.bundle_current_track), currentTrack);
+        }
+
         _playerFragment =
                 (PlayerFragment)getSupportFragmentManager()
                         .findFragmentByTag(PLAYER_FRAGMENT_TAG);
         if (_playerFragment == null)
         {
             _playerFragment = new PlayerFragment();
+            _playerFragment.setArguments(bundle);
         }
         getSupportFragmentManager()
                 .beginTransaction()

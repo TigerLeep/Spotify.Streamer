@@ -1,25 +1,113 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              >
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minWidth="400dp"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="16dp"
+    >
+
     <TextView
+        android:id="@+id/player_artist_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Artist Name"
+        />
+
+    <TextView
+        android:id="@+id/player_album_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Album Name"
+        />
+
+    <ImageView
+        android:id="@+id/player_album_thumbnail"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:src="@mipmap/ic_launcher"
+        />
+
+    <TextView
+        android:id="@+id/player_track_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Track Name"/>
+
+
+    <SeekBar
+        android:id="@+id/player_time_slider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/player_current_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="left"
+            android:layout_weight="1"
+            android:text="0:00"/>
+
+        <TextView
+            android:id="@+id/player_total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:layout_weight="1"
+            android:text="3:45"/>
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/player_text"
-        android:text="Hello, world!"
-        />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/player_previous_button"
-        android:text="@string/player_previous_text"
-        />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/player_next_button"
-        android:text="@string/player_next_text"
-        />
+        android:orientation="horizontal"
+        android:gravity="center_horizontal">
+
+        <ImageButton
+            android:id="@+id/player_skipback_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_rew"
+            android:contentDescription="rewind"/>
+
+        <ImageButton
+            android:id="@+id/player_previous_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_previous"
+            android:contentDescription="previous"/>
+
+        <ImageButton
+            android:id="@+id/player_play_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_play"
+            android:contentDescription="play"/>
+
+        <ImageButton
+            android:id="@+id/player_next_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_next"
+            android:contentDescription="next"/>
+
+        <ImageButton
+            android:id="@+id/player_skipforward_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_ff"
+            android:contentDescription="rewind"/>
+
+    </LinearLayout>
+
 </LinearLayout>
