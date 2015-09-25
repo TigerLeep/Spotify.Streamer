@@ -1,6 +1,5 @@
 package com.tigerbase.spotifystreamer.Player;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -8,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
@@ -24,10 +24,11 @@ import com.squareup.picasso.Picasso;
 import com.tigerbase.spotifystreamer.R;
 import com.tigerbase.spotifystreamer.Track;
 import com.tigerbase.spotifystreamer.Player.PlayerService.PlayerBinder;
+import com.tigerbase.spotifystreamer.Player.PlayerReceiver.Receivable;
 
 import java.util.ArrayList;
 
-public class PlayerFragment extends DialogFragment
+public class PlayerFragment extends DialogFragment implements Receivable, SeekBar.OnSeekBarChangeListener
 {
     private final static String LOG_TAG = PlayerFragment.class.getSimpleName();
 
@@ -35,7 +36,9 @@ public class PlayerFragment extends DialogFragment
     private TextView _albumName;
     private TextView _trackName;
     private ImageView _albumThumbnail;
-    private SeekBar _timeSlider;
+    private SeekBar _progressSlider;
+    private TextView _playerCurrentTime;
+    private TextView _playerTotalTime;
     private ImageButton _skipBackButton;
     private ImageButton _previousButton;
     private ImageButton _playButton;
@@ -47,6 +50,25 @@ public class PlayerFragment extends DialogFragment
     private PlayerService _playerService = null;
     private Intent _playerServiceIntent = null;
     private boolean _isPlayerServiceBound = false;
+    private PlayerReceiver _playerReceiver = null;
+    private boolean _shouldUpdateProgressBarAutomatically = true;
+    private Handler _handler = new Handler();
+    private Runnable _currentTimeUpdater = new Runnable()
+    {
+        private final String LOG_TAG = "_currentTimeUpdater";
+        @Override
+        public void run()
+        {
+            Log.v(LOG_TAG, "_currentTimeUpdater");
+            if (!isAdded())
+            {
+                return;
+            }
+            int milliseconds = _playerService.getCurrentTime();
+            updateCurrentPosition(milliseconds);
+            _handler.postDelayed(_currentTimeUpdater, 250);
+        }
+    };
 
     private ServiceConnection _playerServiceConnection = new ServiceConnection()
     {
@@ -82,7 +104,7 @@ public class PlayerFragment extends DialogFragment
         View view = inflater.inflate(R.layout.fragment_player, null);
 
         getViews(view);
-        bindButtonClickListeners();
+        bindListeners();
 
         Bundle bundle = getIncomingStateBundle(savedInstanceState);
         if (bundle != null)
@@ -90,9 +112,18 @@ public class PlayerFragment extends DialogFragment
             Log.v(LOG_TAG, "onCreateView: bundle");
             _tracks = bundle.getParcelableArrayList(getString(R.string.bundle_tracks));
             _currentTrack = bundle.getInt(getString(R.string.bundle_current_track));
+            if (bundle.containsKey(getString(R.string.player_receiver_tag)))
+            {
+                _playerReceiver = bundle.getParcelable(getString(R.string.player_receiver_tag));
+            }
             displayCurrentTrack();
         }
 
+        if (_playerReceiver == null)
+        {
+            _playerReceiver = new PlayerReceiver(new Handler());
+        }
+        _playerReceiver.setReceiver(this);
 
         return view;
     }
@@ -114,6 +145,7 @@ public class PlayerFragment extends DialogFragment
         super.onSaveInstanceState(outState);
         outState.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
         outState.putInt(getString(R.string.bundle_current_track), _currentTrack);
+        outState.putParcelable(getString(R.string.player_receiver_tag), _playerReceiver);
     }
 
     @Override
@@ -121,6 +153,55 @@ public class PlayerFragment extends DialogFragment
     {
         Log.v(LOG_TAG, "onDismiss");
         super.onDismiss(dialog);
+        stopTrackingTime();
+    }
+
+    @Override
+    public void onReceiveResult(int resultCode, Bundle resultData)
+    {
+        Log.v(LOG_TAG, "onReceiveResult");
+        if (!isAdded())
+        {
+            return;
+        }
+        String resultType = resultData.getString(getString(R.string.player_receiver_type_tag));
+        if (resultType == getString(R.string.player_receiver_duration))
+        {
+            Log.v(LOG_TAG, "onReceiveResult: duration");
+            int duration = resultData.getInt(getString(R.string.player_receiver_duration, 0));
+            updateDuration(duration);
+            startTrackingTime();
+        }
+        else if (resultType == getString(R.string.player_receiver_playback_done))
+        {
+            Log.v(LOG_TAG, "onReceiveResult: playback_done");
+            updateCurrentPosition(0);
+            stopTrackingTime();
+        }
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+    {
+        if(_isPlayerServiceBound && fromUser)
+        {
+            Log.v(LOG_TAG, "onProgressChanged: fromUser");
+            _playerService.setCurrentTime(progress);
+        }
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar)
+    {
+        Log.v(LOG_TAG, "onStartTrackingTouch");
+        _shouldUpdateProgressBarAutomatically = false;
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar)
+    {
+        Log.v(LOG_TAG, "onStopTrackingTouch");
+        _shouldUpdateProgressBarAutomatically = true;
     }
 
     private void displayCurrentTrack()
@@ -178,8 +259,10 @@ public class PlayerFragment extends DialogFragment
         _albumName = (TextView)view.findViewById(R.id.player_album_name);
         _trackName = (TextView)view.findViewById(R.id.player_track_name);
         _albumThumbnail = (ImageView)view.findViewById(R.id.player_album_thumbnail);
-        _timeSlider = (SeekBar)view.findViewById(R.id.player_time_slider);
+        _progressSlider = (SeekBar)view.findViewById(R.id.player_time_slider);
         _skipBackButton = (ImageButton)view.findViewById(R.id.player_skipback_button);
+        _playerCurrentTime = (TextView)view.findViewById(R.id.player_current_time);
+        _playerTotalTime = (TextView)view.findViewById(R.id.player_total_time);
         _previousButton = (ImageButton)view.findViewById(R.id.player_previous_button);
         _playButton = (ImageButton)view.findViewById(R.id.player_play_button);
         _nextButton = (ImageButton)view.findViewById(R.id.player_next_button);
@@ -229,18 +312,20 @@ public class PlayerFragment extends DialogFragment
         {
             Context context = getActivity().getApplicationContext();
             _playerServiceIntent = new Intent(context, PlayerService.class);
+            _playerServiceIntent.putExtra(getString(R.string.player_receiver_tag), _playerReceiver);
             context.bindService(_playerServiceIntent, _playerServiceConnection, context.BIND_AUTO_CREATE);
             context.startService(_playerServiceIntent);
         }
     }
 
-    private void bindButtonClickListeners()
+    private void bindListeners()
     {
         _skipBackButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
+                Log.v(LOG_TAG, "_skipBackButton.onClick");
                 skipBack();
             }
         });
@@ -249,6 +334,7 @@ public class PlayerFragment extends DialogFragment
             @Override
             public void onClick(View v)
             {
+                Log.v(LOG_TAG, "_previousButton.onClick");
                 goToPreviousTrack();
             }
         });
@@ -257,6 +343,7 @@ public class PlayerFragment extends DialogFragment
             @Override
             public void onClick(View v)
             {
+                Log.v(LOG_TAG, "_playButton.onClick");
                 startPlayback();
             }
         });
@@ -265,6 +352,7 @@ public class PlayerFragment extends DialogFragment
             @Override
             public void onClick(View v)
             {
+                Log.v(LOG_TAG, "_nextButton.onClick");
                 goToNextTrack();
             }
         });
@@ -273,11 +361,47 @@ public class PlayerFragment extends DialogFragment
             @Override
             public void onClick(View v)
             {
+                Log.v(LOG_TAG, "_skipForwardButton.onClick");
                 skipForward();
             }
         });
+        _progressSlider.setOnSeekBarChangeListener(this);
     }
 
+    private void updateDuration(int milliseconds)
+    {
+        Log.v(LOG_TAG, "updateDuration");
+        _progressSlider.setMax(milliseconds);
+        _playerTotalTime.setText(formatMilliseconds(milliseconds));
+    }
 
+    private void updateCurrentPosition(int milliseconds)
+    {
+        //Log.v(LOG_TAG, "updateCurrentPosition");
+        if (_shouldUpdateProgressBarAutomatically)
+        {
+            _progressSlider.setProgress(milliseconds);
+        }
+        _playerCurrentTime.setText(formatMilliseconds(milliseconds));
+    }
+
+    private String formatMilliseconds(int milliseconds)
+    {
+        int minutes = milliseconds / 1000 / 60;
+        int seconds = milliseconds / 1000 - (minutes * 60);
+
+        return String.format("%d:%02d", minutes, seconds);
+    }
+
+    private void startTrackingTime()
+    {
+        stopTrackingTime();
+        _currentTimeUpdater.run();
+    }
+
+    private void stopTrackingTime()
+    {
+        _handler.removeCallbacks(_currentTimeUpdater);
+    }
 }
 

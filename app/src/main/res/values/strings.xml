@@ -19,4 +19,8 @@
     <string name="player_name">Preview</string>
     <string name="notification_playing_message">%s (playing)</string>
     <string name="notification_buffering_message">%s (buffering)</string>
+    <string name="player_receiver_type_tag">Player_Receiver_Type</string>
+    <string name="player_receiver_duration">Duration</string>
+    <string name="player_receiver_playback_done">Playback_Done</string>
+    <string name="player_receiver_tag">Player_Receiver</string>
 </resources>

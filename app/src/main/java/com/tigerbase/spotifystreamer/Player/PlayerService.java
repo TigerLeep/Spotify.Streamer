@@ -11,8 +11,10 @@ import android.media.MediaPlayer;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.ResultReceiver;
 import android.util.Log;
 
 import com.tigerbase.spotifystreamer.ArtistSearch.ArtistSearchActivity;
@@ -34,22 +36,18 @@ public class PlayerService
     private static final String LOG_TAG = PlayerService.class.getSimpleName();
     private static final String WIFI_LOCK_TAG = "WifiLock";
 
-    private static final String ACTION_PLAY = "com.tigerbase.spotifystreamer.play";
-    private static final String ACTION_PAUSE = "com.tigerbase.spotifystreamer.pause";
-    private static final String ACTION_PREVIOUS_TRACK = "com.tigerbase.spotifystreamer.previous_track";
-    private static final String ACTION_NEXT_TRACK = "com.tigerbase.spotifystreamer.next_track";
-    private static final String ACTION_STOP = "com.tigerbase.spotifystreamer.stop";
-    private static final String ACTION_SKIP_BACK = "com.tigerbase.spotifystreamer.skip_back";
-    private static final String ACTION_SKIP_FORWARD = "com.tigerbase.spotifystreamer.skip_forward";
-
     private static final int NOTIFICATION_ID = 1;
     private static final float DUCK_VOLUME = 0.1f;
+
+    public static final String RECEIVER_TYPE_TAG = "Type";
+    public static final String RECEIVER_TYPE_DURATION = "Duration";
 
     private AudioManager _audioManager;
     private NotificationManager _notificationManager;
     private Notification _notification;
     private MediaPlayer _mediaPlayer;
     private IBinder _playerBinder = new PlayerBinder();
+    private ResultReceiver _playerReceiver;
 
     private WifiLock _wifiLock;
     private AudioFocus _audioFocus;
@@ -78,37 +76,12 @@ public class PlayerService
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         Log.v(LOG_TAG, "onStartCommand");
-        String action = intent.getAction();
-        if (action == null)
+
+        if (intent.hasExtra(getString(R.string.player_receiver_tag)))
         {
-            Log.v(LOG_TAG, "onStartCommand: action == null");
-            return START_NOT_STICKY;
+            _playerReceiver = intent.getParcelableExtra(getString(R.string.player_receiver_tag));
         }
 
-        switch (action)
-        {
-            case ACTION_PLAY:
-                startPlayback();
-                break;
-            case ACTION_PAUSE:
-                pausePlayback();
-                break;
-            case ACTION_PREVIOUS_TRACK:
-                previousTrack();
-                break;
-            case ACTION_NEXT_TRACK:
-                nextTrack();
-                break;
-            case ACTION_STOP:
-                stopPlayback();
-                break;
-            case ACTION_SKIP_BACK:
-                skipBack();
-                break;
-            case ACTION_SKIP_FORWARD:
-                skipForward();
-                break;
-        }
         return START_NOT_STICKY;
     }
 
@@ -135,7 +108,9 @@ public class PlayerService
     public void onCompletion(MediaPlayer mp)
     {
         Log.v(LOG_TAG, "onCompletion");
+        tellPlayerUIPlaybackDone();
         releaseAllResources();
+
     }
 
     @Override
@@ -152,6 +127,7 @@ public class PlayerService
         _serviceMode = ServiceMode.Playing;
         updateExistingNotification(_tracks.get(_currentTrack).Name + " (Playing)");
         configureAndStartMediaPlayer();
+        sendDurationToPlayerUI();
     }
 
     @Override
@@ -517,6 +493,24 @@ public class PlayerService
         return !(_tracks == null || _currentTrack < 0 || _currentTrack >= _tracks.size());
     }
 
+    private void sendDurationToPlayerUI()
+    {
+        Log.v(LOG_TAG, "sendDurationToPlayerUI");
+        int duration = _mediaPlayer.getDuration();
+        Bundle bundle = new Bundle();
+        bundle.putString(getString(R.string.player_receiver_type_tag), getString(R.string.player_receiver_duration));
+        bundle.putInt(getString(R.string.player_receiver_duration), duration);
+        _playerReceiver.send(0, bundle);
+    }
+
+    private void tellPlayerUIPlaybackDone()
+    {
+        Log.v(LOG_TAG, "tellPlayerUIPlaybackDone");
+        Bundle bundle = new Bundle();
+        bundle.putString(getString(R.string.player_receiver_type_tag), getString(R.string.player_receiver_playback_done));
+        _playerReceiver.send(0, bundle);
+    }
+
     public int getCurrentTrack()
     {
         Log.v(LOG_TAG, "getCurrentTrack");
@@ -529,6 +523,24 @@ public class PlayerService
         _currentTrack = currentTrack;
     }
 
+    public int getCurrentTime()
+    {
+        int milliseconds = 0;
+        if (_mediaPlayer != null)
+        {
+            milliseconds = _mediaPlayer.getCurrentPosition();
+        }
+        return milliseconds;
+    }
+
+    public void setCurrentTime(int milliseconds)
+    {
+        if (_mediaPlayer != null && milliseconds <= _mediaPlayer.getDuration())
+        {
+            _mediaPlayer.seekTo(milliseconds);
+        }
+    }
+
     public class PlayerBinder extends Binder
     {
         private final String LOG_TAG = PlayerBinder.class.getSimpleName();
@@ -539,5 +551,4 @@ public class PlayerService
             return PlayerService.this;
         }
     }
-
 }
