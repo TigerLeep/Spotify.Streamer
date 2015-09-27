@@ -36,11 +36,10 @@ public class PlayerService
     private static final String LOG_TAG = PlayerService.class.getSimpleName();
     private static final String WIFI_LOCK_TAG = "WifiLock";
 
+    public static final int DURATION_INVALID = -1;
+
     private static final int NOTIFICATION_ID = 1;
     private static final float DUCK_VOLUME = 0.1f;
-
-    public static final String RECEIVER_TYPE_TAG = "Type";
-    public static final String RECEIVER_TYPE_DURATION = "Duration";
 
     private AudioManager _audioManager;
     private NotificationManager _notificationManager;
@@ -432,6 +431,7 @@ public class PlayerService
         Log.v(LOG_TAG, "startMediaPlayerIfNotPlaying");
         if (!_mediaPlayer.isPlaying())
         {
+            Log.v(LOG_TAG, "startMediaPlayerIfNotPlaying: !isPlaying");
             _mediaPlayer.start();
         }
     }
@@ -441,6 +441,7 @@ public class PlayerService
         Log.v(LOG_TAG, "pauseMediaPlayerIfPlaying");
         if (_mediaPlayer.isPlaying())
         {
+            Log.v(LOG_TAG, "pauseMediaPlayerIfPlaying: isPlaying");
             _mediaPlayer.pause();
         }
     }
@@ -487,12 +488,6 @@ public class PlayerService
         return String.format(notificationFormatText, track.Name);
     }
 
-    private boolean isCurrentTrackValid()
-    {
-        Log.v(LOG_TAG, "isCurrentTrackValid");
-        return !(_tracks == null || _currentTrack < 0 || _currentTrack >= _tracks.size());
-    }
-
     private void sendDurationToPlayerUI()
     {
         Log.v(LOG_TAG, "sendDurationToPlayerUI");
@@ -525,20 +520,40 @@ public class PlayerService
 
     public int getCurrentTime()
     {
+        //Log.v(LOG_TAG, "getCurrentTime");
         int milliseconds = 0;
         if (_mediaPlayer != null)
         {
-            milliseconds = _mediaPlayer.getCurrentPosition();
+            if (_serviceMode == ServiceMode.Stopped)
+            {
+                milliseconds = DURATION_INVALID;
+            }
+            else
+            {
+                milliseconds = _mediaPlayer.getCurrentPosition();
+            }
         }
         return milliseconds;
     }
 
+    public int getDuration()
+    {
+        return _mediaPlayer.getDuration();
+    }
+
     public void setCurrentTime(int milliseconds)
     {
+        Log.v(LOG_TAG, "setCurrentTime");
         if (_mediaPlayer != null && milliseconds <= _mediaPlayer.getDuration())
         {
             _mediaPlayer.seekTo(milliseconds);
         }
+    }
+
+    public ServiceMode getMode()
+    {
+        Log.v(LOG_TAG, "getMode - " + _serviceMode.toString());
+        return _serviceMode;
     }
 
     public class PlayerBinder extends Binder

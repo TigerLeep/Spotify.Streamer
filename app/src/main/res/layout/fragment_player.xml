@@ -63,7 +63,7 @@
             android:layout_height="wrap_content"
             android:gravity="right"
             android:layout_weight="1"
-            android:text="3:45"/>
+            android:text="0:30"/>
 
     </LinearLayout>
 

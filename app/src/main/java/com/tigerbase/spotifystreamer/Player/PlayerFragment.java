@@ -9,6 +9,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -47,6 +48,8 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
 
     private ArrayList<Track> _tracks = null;
     private int _currentTrack = 0;
+    private int _duration = 0;
+    private boolean _forceRestartIfDifferentTrack = false;
     private PlayerService _playerService = null;
     private Intent _playerServiceIntent = null;
     private boolean _isPlayerServiceBound = false;
@@ -59,21 +62,23 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         @Override
         public void run()
         {
-            Log.v(LOG_TAG, "_currentTimeUpdater");
+            Log.v(LOG_TAG, "run");
             if (!isAdded())
             {
+                Log.v(LOG_TAG, "run: !isAdded");
                 return;
             }
             int milliseconds = _playerService.getCurrentTime();
-            updateCurrentPosition(milliseconds);
-            _handler.postDelayed(_currentTimeUpdater, 250);
+            if (milliseconds != PlayerService.DURATION_INVALID)
+            {
+                updateCurrentPosition(milliseconds);
+                _handler.postDelayed(_currentTimeUpdater, 250);
+            }
         }
     };
 
     private ServiceConnection _playerServiceConnection = new ServiceConnection()
     {
-        private final String LOG_TAG = PlayerFragment.class.getName();
-
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder)
         {
@@ -110,11 +115,12 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         if (bundle != null)
         {
             Log.v(LOG_TAG, "onCreateView: bundle");
-            _tracks = bundle.getParcelableArrayList(getString(R.string.bundle_tracks));
-            _currentTrack = bundle.getInt(getString(R.string.bundle_current_track));
-            if (bundle.containsKey(getString(R.string.player_receiver_tag)))
+            loadStateFromBundle(bundle);
+            if(_isPlayerServiceBound &&
+                    (_playerService.getMode() == ServiceMode.Playing
+                     || _playerService.getMode() == ServiceMode.Paused))
             {
-                _playerReceiver = bundle.getParcelable(getString(R.string.player_receiver_tag));
+                _currentTimeUpdater.run();
             }
             displayCurrentTrack();
         }
@@ -128,6 +134,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         return view;
     }
 
+    @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
@@ -139,13 +146,26 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     }
 
     @Override
+    public void onDestroyView()
+    {
+        Log.v(LOG_TAG, "onDestroyView");
+        if (getDialog() != null && getRetainInstance())
+        {
+            Log.v(LOG_TAG, "onDestroyView: getDialog != null && getRetainInstance");
+            getDialog().setOnDismissListener(null);
+        }
+        super.onDestroyView();
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState)
     {
         Log.v(LOG_TAG, "onSaveInstanceState");
         super.onSaveInstanceState(outState);
         outState.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
         outState.putInt(getString(R.string.bundle_current_track), _currentTrack);
-        outState.putParcelable(getString(R.string.player_receiver_tag), _playerReceiver);
+        outState.putInt(getString(R.string.bundle_duration), _duration);
+        //outState.putParcelable(getString(R.string.player_receiver_tag), _playerReceiver);
     }
 
     @Override
@@ -168,8 +188,8 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         if (resultType == getString(R.string.player_receiver_duration))
         {
             Log.v(LOG_TAG, "onReceiveResult: duration");
-            int duration = resultData.getInt(getString(R.string.player_receiver_duration, 0));
-            updateDuration(duration);
+            _duration = resultData.getInt(getString(R.string.player_receiver_duration, 0));
+            updateDuration(_duration);
             startTrackingTime();
         }
         else if (resultType == getString(R.string.player_receiver_playback_done))
@@ -229,9 +249,22 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         Log.v(LOG_TAG, "bindToPlayerService");
         PlayerBinder playerBinder = (PlayerBinder)binder;
         _playerService = playerBinder.getService();
-        _playerService.setTracks(_tracks);
-        _playerService.setCurrentTrack(_currentTrack);
-        _playerService.startPlayback();
+        ServiceMode serviceMode = _playerService.getMode();
+        boolean sameTrack = (_playerService.getCurrentTrack() == _currentTrack);
+        if (serviceMode == ServiceMode.Stopped || (_forceRestartIfDifferentTrack && !sameTrack))
+        {
+            _playerService.setTracks(_tracks);
+            _playerService.setCurrentTrack(_currentTrack);
+            stopTrackingTime();
+            _playerService.startPlayback();
+            _forceRestartIfDifferentTrack = false;
+        }
+        else if (serviceMode == ServiceMode.Playing || serviceMode == ServiceMode.Paused)
+        {
+            _currentTimeUpdater.run();
+            _duration = _playerService.getDuration();
+            updateDuration(_duration);
+        }
         _isPlayerServiceBound = true;
     }
 
@@ -308,8 +341,13 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     private void startPlayerService()
     {
         Log.v(LOG_TAG, "startPlayerService");
+        if(_playerService == null)
+        {
+            Log.v(LOG_TAG, "startPlayerService: _playerService == null");
+        }
         if(_playerServiceIntent == null)
         {
+            Log.v(LOG_TAG, "startPlayerService: _playerServiceIntent == null");
             Context context = getActivity().getApplicationContext();
             _playerServiceIntent = new Intent(context, PlayerService.class);
             _playerServiceIntent.putExtra(getString(R.string.player_receiver_tag), _playerReceiver);
@@ -320,6 +358,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
 
     private void bindListeners()
     {
+        Log.v(LOG_TAG, "bindListeners");
         _skipBackButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -380,6 +419,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         //Log.v(LOG_TAG, "updateCurrentPosition");
         if (_shouldUpdateProgressBarAutomatically)
         {
+            _progressSlider.setMax(_duration);
             _progressSlider.setProgress(milliseconds);
         }
         _playerCurrentTime.setText(formatMilliseconds(milliseconds));
@@ -401,7 +441,37 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
 
     private void stopTrackingTime()
     {
+        //
         _handler.removeCallbacks(_currentTimeUpdater);
     }
+
+    private void loadStateFromBundle(Bundle bundle)
+    {
+        Log.v(LOG_TAG, "loadStateFromBundle");
+        _tracks = bundle.getParcelableArrayList(getString(R.string.bundle_tracks));
+        _currentTrack = bundle.getInt(getString(R.string.bundle_current_track));
+        if (bundle.containsKey(getString(R.string.bundle_duration)))
+        {
+            Log.v(LOG_TAG, "loadStateFromBundle: duration");
+            _duration = bundle.getInt(getString(R.string.bundle_duration));
+            updateDuration(_duration);
+        }
+        if (bundle.containsKey(getString(R.string.bundle_force_restart_if_different_track)))
+        {
+            _forceRestartIfDifferentTrack = true;
+        }
+
+        // Works great on screen rotate, but throws an exception when the user hits Home and then
+        // clicks this app's icon to return here.  It complains that it can't cast the
+        // ResultReceiver in the bundle to a PlayerReceiver.  WTF?  It definitely *IS* a
+        // PlayerReceiver when onSaveInstanceState stuffs it in there.:)
+        //
+        //if (bundle.containsKey(getString(R.string.player_receiver_tag)))
+        //{
+            //Log.v(LOG_TAG, "loadStateFromBundle: receiver_tag");
+            //_playerReceiver = bundle.getParcelable(getString(R.string.player_receiver_tag));
+        //}
+    }
+
 }
 

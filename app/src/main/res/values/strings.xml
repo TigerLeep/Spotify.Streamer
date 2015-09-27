@@ -14,13 +14,16 @@
     <string name="player_cancel_text">Cancel</string>
     <string name="player_next_text">Next</string>
     <string name="player_previous_text">Prev</string>
-    <string name="bundle_tracks">Tracks</string>
-    <string name="bundle_current_track">Current_Track</string>
     <string name="player_name">Preview</string>
     <string name="notification_playing_message">%s (playing)</string>
     <string name="notification_buffering_message">%s (buffering)</string>
-    <string name="player_receiver_type_tag">Player_Receiver_Type</string>
-    <string name="player_receiver_duration">Duration</string>
-    <string name="player_receiver_playback_done">Playback_Done</string>
-    <string name="player_receiver_tag">Player_Receiver</string>
+    <string name="player_receiver_type_tag">receiver_type</string>
+    <string name="player_receiver_duration">receiver_duration</string>
+    <string name="player_receiver_playback_done">receiver_playback_done</string>
+    <string name="player_receiver_tag">receiver</string>
+    <string name="bundle_tracks">tracks</string>
+    <string name="bundle_current_track">current_track</string>
+    <string name="bundle_duration">duration</string>
+    <string name="bundle_is_playing">is_playing</string>
+    <string name="bundle_force_restart_if_different_track">force_restart</string>
 </resources>

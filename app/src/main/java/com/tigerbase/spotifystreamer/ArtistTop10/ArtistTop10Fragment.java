@@ -330,6 +330,7 @@ public class ArtistTop10Fragment extends Fragment
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
         bundle.putInt(getString(R.string.bundle_current_track), _currentTrack);
+        bundle.putBoolean(getString(R.string.bundle_force_restart_if_different_track), true);
         return bundle;
     }
 }
