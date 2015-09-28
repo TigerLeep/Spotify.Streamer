@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -36,12 +37,14 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     private TextView _artistName;
     private TextView _albumName;
     private TextView _trackName;
+    private ProgressBar _playerBuffering;
     private ImageView _albumThumbnail;
     private SeekBar _progressSlider;
     private TextView _playerCurrentTime;
     private TextView _playerTotalTime;
     private ImageButton _skipBackButton;
     private ImageButton _previousButton;
+    private ImageButton _pauseButton;
     private ImageButton _playButton;
     private ImageButton _nextButton;
     private ImageButton _skipForwardButton;
@@ -134,8 +137,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         return view;
     }
 
-    @NonNull
-    @Override
+    @NonNull @Override
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
         Log.v(LOG_TAG, "onCreateDialog");
@@ -184,20 +186,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         {
             return;
         }
-        String resultType = resultData.getString(getString(R.string.player_receiver_type_tag));
-        if (resultType == getString(R.string.player_receiver_duration))
-        {
-            Log.v(LOG_TAG, "onReceiveResult: duration");
-            _duration = resultData.getInt(getString(R.string.player_receiver_duration, 0));
-            updateDuration(_duration);
-            startTrackingTime();
-        }
-        else if (resultType == getString(R.string.player_receiver_playback_done))
-        {
-            Log.v(LOG_TAG, "onReceiveResult: playback_done");
-            updateCurrentPosition(0);
-            stopTrackingTime();
-        }
+        processServiceMessage(resultData);
     }
 
     @Override
@@ -291,12 +280,14 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         _artistName = (TextView)view.findViewById(R.id.player_artist_name);
         _albumName = (TextView)view.findViewById(R.id.player_album_name);
         _trackName = (TextView)view.findViewById(R.id.player_track_name);
+        _playerBuffering = (ProgressBar)view.findViewById(R.id.player_buffering);
         _albumThumbnail = (ImageView)view.findViewById(R.id.player_album_thumbnail);
         _progressSlider = (SeekBar)view.findViewById(R.id.player_time_slider);
         _skipBackButton = (ImageButton)view.findViewById(R.id.player_skipback_button);
         _playerCurrentTime = (TextView)view.findViewById(R.id.player_current_time);
         _playerTotalTime = (TextView)view.findViewById(R.id.player_total_time);
         _previousButton = (ImageButton)view.findViewById(R.id.player_previous_button);
+        _pauseButton = (ImageButton)view.findViewById(R.id.player_pause_button);
         _playButton = (ImageButton)view.findViewById(R.id.player_play_button);
         _nextButton = (ImageButton)view.findViewById(R.id.player_next_button);
         _skipForwardButton = (ImageButton)view.findViewById(R.id.player_skipforward_button);
@@ -314,6 +305,15 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         _playerService.previousTrack();
         _currentTrack = _playerService.getCurrentTrack();
         displayCurrentTrack();
+    }
+
+    private void pausePlayback()
+    {
+        Log.v(LOG_TAG, "pausePlayback");
+        if (_isPlayerServiceBound && _playerService.getMode() == ServiceMode.Playing)
+        {
+            _playerService.pausePlayback();
+        }
     }
 
     private void startPlayback()
@@ -350,7 +350,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
             Log.v(LOG_TAG, "startPlayerService: _playerServiceIntent == null");
             Context context = getActivity().getApplicationContext();
             _playerServiceIntent = new Intent(context, PlayerService.class);
-            _playerServiceIntent.putExtra(getString(R.string.player_receiver_tag), _playerReceiver);
+            _playerServiceIntent.putExtra(PlayerService.RECEIVER_TAG, _playerReceiver);
             context.bindService(_playerServiceIntent, _playerServiceConnection, context.BIND_AUTO_CREATE);
             context.startService(_playerServiceIntent);
         }
@@ -375,6 +375,15 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
             {
                 Log.v(LOG_TAG, "_previousButton.onClick");
                 goToPreviousTrack();
+            }
+        });
+        _pauseButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Log.v(LOG_TAG, "_pauseButton.onClick");
+                pausePlayback();
             }
         });
         _playButton.setOnClickListener(new View.OnClickListener()
@@ -473,5 +482,62 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         //}
     }
 
-}
+    private void processServiceMessage(Bundle resultData)
+    {
+        Log.v(LOG_TAG, "processServiceMessage");
+        String messageType = resultData.getString(PlayerReceiver.MESSAGE_TYPE_TAG);
+        switch (messageType)
+        {
+            case PlayerReceiver.MESSAGE_DURATION:
+                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_DURATION");
+                _duration = resultData.getInt(PlayerReceiver.MESSAGE_DURATION, 0);
+                updateDuration(_duration);
+                startTrackingTime();
+                break;
+            case PlayerReceiver.MESSAGE_PLAYBACK_DONE:
+                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_DONE");
+                updateCurrentPosition(0);
+                stopTrackingTime();
+                showPlayButton();
+                break;
+            case PlayerReceiver.MESSAGE_PLAYBACK_BUFFERING:
+                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_BUFFERING");
+                showBuffering();
+            case PlayerReceiver.MESSAGE_PLAYBACK_STARTED:
+                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_STARTED");
+                hideBuffering();
+                showPauseButton();
+                break;
+            case PlayerReceiver.MESSAGE_PLAYBACK_PAUSED:
+                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_PAUSED");
+                showPlayButton();
+        }
+    }
 
+    private void showPauseButton()
+    {
+        Log.v(LOG_TAG, "showPauseButton");
+        _playButton.setVisibility(View.GONE);
+        _pauseButton.setVisibility(View.VISIBLE);
+    }
+
+    private void showPlayButton()
+    {
+        Log.v(LOG_TAG, "showPlayButton");
+        _playButton.setVisibility(View.VISIBLE);
+        _pauseButton.setVisibility(View.GONE);
+    }
+
+    private void showBuffering()
+    {
+        Log.v(LOG_TAG, "showBuffering");
+        _playerBuffering.setVisibility(View.VISIBLE);
+    }
+
+    private void hideBuffering()
+    {
+        Log.v(LOG_TAG, "hideBuffering");
+        _playerBuffering.setVisibility(View.INVISIBLE);
+    }
+
+}

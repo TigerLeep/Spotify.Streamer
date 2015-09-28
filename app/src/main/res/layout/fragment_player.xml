@@ -25,12 +25,26 @@
         android:text="Album Name"
         />
 
-    <ImageView
-        android:id="@+id/player_album_thumbnail"
-        android:layout_width="250dp"
-        android:layout_height="250dp"
-        android:src="@mipmap/ic_launcher"
-        />
+    <RelativeLayout
+        android:id="@+id/loadingPanel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center" >
+
+        <ImageView
+            android:id="@+id/player_album_thumbnail"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:src="@mipmap/ic_launcher"
+            />
+        <ProgressBar
+            android:id="@+id/player_buffering"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:indeterminate="true"
+            android:visibility="invisible"
+            />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/player_track_name"
@@ -86,6 +100,14 @@
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_media_previous"
             android:contentDescription="previous"/>
+
+        <ImageButton
+            android:id="@+id/player_pause_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@android:drawable/ic_media_pause"
+            android:visibility="gone"
+            android:contentDescription="play"/>
 
         <ImageButton
             android:id="@+id/player_play_button"

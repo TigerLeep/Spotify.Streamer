@@ -33,13 +33,13 @@ public class PlayerService
         implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
                    MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener
 {
-    private static final String LOG_TAG = PlayerService.class.getSimpleName();
-    private static final String WIFI_LOCK_TAG = "WifiLock";
-
     public static final int DURATION_INVALID = -1;
+    public static final String RECEIVER_TAG = "RECEIVER";
 
+    private static final String LOG_TAG = PlayerService.class.getSimpleName();
+    private static final String WIFI_LOCK_TAG = "WIFILOCK";
     private static final int NOTIFICATION_ID = 1;
-    private static final float DUCK_VOLUME = 0.1f;
+    private static final float DUCK_VOLUME = 0.2f;
 
     private AudioManager _audioManager;
     private NotificationManager _notificationManager;
@@ -76,9 +76,9 @@ public class PlayerService
     {
         Log.v(LOG_TAG, "onStartCommand");
 
-        if (intent.hasExtra(getString(R.string.player_receiver_tag)))
+        if (intent.hasExtra(PlayerService.RECEIVER_TAG))
         {
-            _playerReceiver = intent.getParcelableExtra(getString(R.string.player_receiver_tag));
+            _playerReceiver = intent.getParcelableExtra(PlayerService.RECEIVER_TAG);
         }
 
         return START_NOT_STICKY;
@@ -98,7 +98,7 @@ public class PlayerService
                 duckPlayback();
                 break;
             case AudioManager.AUDIOFOCUS_GAIN:
-                startPlayback();
+                unduckPlayback();
                 break;
         }
     }
@@ -107,7 +107,7 @@ public class PlayerService
     public void onCompletion(MediaPlayer mp)
     {
         Log.v(LOG_TAG, "onCompletion");
-        tellPlayerUIPlaybackDone();
+        announcePlaybackDone();
         releaseAllResources();
 
     }
@@ -126,7 +126,8 @@ public class PlayerService
         _serviceMode = ServiceMode.Playing;
         updateExistingNotification(_tracks.get(_currentTrack).Name + " (Playing)");
         configureAndStartMediaPlayer();
-        sendDurationToPlayerUI();
+        announceDuration();
+        announcePlaybackStarted();
     }
 
     @Override
@@ -230,6 +231,7 @@ public class PlayerService
                 _serviceMode = ServiceMode.Playing;
                 bringServiceToForeground(getPlayingNotificationMessage());
                 configureAndStartMediaPlayer();
+                announcePlaybackStarted();
                 break;
             case Stopped:
             case Playing:
@@ -247,6 +249,7 @@ public class PlayerService
                     _serviceMode = ServiceMode.Buffering;
                     bringServiceToForeground(getBufferingNotificationMessage());
                     _mediaPlayer.prepareAsync();
+                    announcePlaybackBuffering();
                     _wifiLock.acquire();
                 }
                 catch (IOException ex)
@@ -265,6 +268,7 @@ public class PlayerService
         {
             _serviceMode = ServiceMode.Paused;
             _mediaPlayer.pause();
+            announcePlaybackPaused();
             releaseAllResourcesExceptMediaPlayer();
         }
     }
@@ -273,6 +277,12 @@ public class PlayerService
     {
         Log.v(LOG_TAG, "duckPlayback");
         setVolumeToLow();
+    }
+
+    public void unduckPlayback()
+    {
+        Log.v(LOG_TAG, "unduckPlayback");
+        setVolumeToFull();
     }
 
     public void stopPlayback()
@@ -488,21 +498,45 @@ public class PlayerService
         return String.format(notificationFormatText, track.Name);
     }
 
-    private void sendDurationToPlayerUI()
+    private void announceDuration()
     {
-        Log.v(LOG_TAG, "sendDurationToPlayerUI");
+        Log.v(LOG_TAG, "announceDuration");
         int duration = _mediaPlayer.getDuration();
         Bundle bundle = new Bundle();
-        bundle.putString(getString(R.string.player_receiver_type_tag), getString(R.string.player_receiver_duration));
-        bundle.putInt(getString(R.string.player_receiver_duration), duration);
+        bundle.putString(PlayerReceiver.MESSAGE_TYPE_TAG, PlayerReceiver.MESSAGE_DURATION);
+        bundle.putInt(PlayerReceiver.MESSAGE_DURATION, duration);
         _playerReceiver.send(0, bundle);
     }
 
-    private void tellPlayerUIPlaybackDone()
+    private void announcePlaybackDone()
     {
-        Log.v(LOG_TAG, "tellPlayerUIPlaybackDone");
+        Log.v(LOG_TAG, "announcePlaybackDone");
         Bundle bundle = new Bundle();
-        bundle.putString(getString(R.string.player_receiver_type_tag), getString(R.string.player_receiver_playback_done));
+        bundle.putString(PlayerReceiver.MESSAGE_TYPE_TAG, PlayerReceiver.MESSAGE_PLAYBACK_DONE);
+        _playerReceiver.send(0, bundle);
+    }
+
+    private void announcePlaybackBuffering()
+    {
+        Log.v(LOG_TAG, "announcePlaybackBuffering");
+        Bundle bundle = new Bundle();
+        bundle.putString(PlayerReceiver.MESSAGE_TYPE_TAG, PlayerReceiver.MESSAGE_PLAYBACK_BUFFERING);
+        _playerReceiver.send(0, bundle);
+    }
+
+    private void announcePlaybackStarted()
+    {
+        Log.v(LOG_TAG, "announcePlaybackStarted");
+        Bundle bundle = new Bundle();
+        bundle.putString(PlayerReceiver.MESSAGE_TYPE_TAG, PlayerReceiver.MESSAGE_PLAYBACK_STARTED);
+        _playerReceiver.send(0, bundle);
+    }
+
+    private void announcePlaybackPaused()
+    {
+        Log.v(LOG_TAG, "announcePlaybackPaused");
+        Bundle bundle = new Bundle();
+        bundle.putString(PlayerReceiver.MESSAGE_TYPE_TAG, PlayerReceiver.MESSAGE_PLAYBACK_PAUSED);
         _playerReceiver.send(0, bundle);
     }
 

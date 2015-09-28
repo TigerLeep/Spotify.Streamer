@@ -10,6 +10,13 @@ import android.util.Log;
 // http://stackoverflow.com/questions/4510974/using-resultreceiver-in-android
 public class PlayerReceiver extends ResultReceiver
 {
+    public static final String MESSAGE_TYPE_TAG = "TYPE";
+    public static final String MESSAGE_DURATION = "DURATION";
+    public static final String MESSAGE_PLAYBACK_BUFFERING = "PLAYBACK_BUFFERING";
+    public static final String MESSAGE_PLAYBACK_STARTED = "PLAYBACK_STARTED";
+    public static final String MESSAGE_PLAYBACK_PAUSED = "PLAYBACK_PAUSED";
+    public static final String MESSAGE_PLAYBACK_DONE = "PLAYBACK_DONE";
+
     private final static String LOG_TAG = PlayerReceiver.class.getSimpleName();
 
     private Receivable _receiver = null;

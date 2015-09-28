@@ -17,10 +17,6 @@
     <string name="player_name">Preview</string>
     <string name="notification_playing_message">%s (playing)</string>
     <string name="notification_buffering_message">%s (buffering)</string>
-    <string name="player_receiver_type_tag">receiver_type</string>
-    <string name="player_receiver_duration">receiver_duration</string>
-    <string name="player_receiver_playback_done">receiver_playback_done</string>
-    <string name="player_receiver_tag">receiver</string>
     <string name="bundle_tracks">tracks</string>
     <string name="bundle_current_track">current_track</string>
     <string name="bundle_duration">duration</string>
