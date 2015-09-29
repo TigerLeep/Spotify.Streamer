@@ -19,6 +19,7 @@
     <string name="notification_buffering_message">%s (buffering)</string>
     <string name="bundle_tracks">tracks</string>
     <string name="bundle_current_track">current_track</string>
+    <string name="bundle_artist_name">artist_name</string>
     <string name="bundle_duration">duration</string>
     <string name="bundle_is_playing">is_playing</string>
     <string name="bundle_force_restart_if_different_track">force_restart</string>

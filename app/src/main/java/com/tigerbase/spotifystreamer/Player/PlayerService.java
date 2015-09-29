@@ -54,6 +54,7 @@ public class PlayerService
 
     private ArrayList<Track> _tracks;
     private int _currentTrack;
+    private String _currentTrackName;
 
     @Override
     public void onCreate()
@@ -241,10 +242,11 @@ public class PlayerService
                 try
                 {
                     initializeMediaPlayerIfNeeded();
-                    Track track = _tracks.get(getCurrentTrack());
+                    Track track = _tracks.get(getCurrentTrackIndex());
                     if(track != null)
                     {
                         _mediaPlayer.setDataSource(track.PreviewUrl);
+                        _currentTrackName = track.Name;
                     }
                     _serviceMode = ServiceMode.Buffering;
                     bringServiceToForeground(getBufferingNotificationMessage());
@@ -490,7 +492,7 @@ public class PlayerService
     private String getNotificationMessage(String notificationFormatText)
     {
         Log.v(LOG_TAG, "getNotificationMessage");
-        Track track = _tracks.get(getCurrentTrack());
+        Track track = _tracks.get(getCurrentTrackIndex());
         if(track == null)
         {
             return "";
@@ -540,9 +542,9 @@ public class PlayerService
         _playerReceiver.send(0, bundle);
     }
 
-    public int getCurrentTrack()
+    public int getCurrentTrackIndex()
     {
-        Log.v(LOG_TAG, "getCurrentTrack");
+        Log.v(LOG_TAG, "getCurrentTrackIndex");
         return _currentTrack;
     }
 
@@ -550,6 +552,11 @@ public class PlayerService
     {
         Log.v(LOG_TAG, "setCurrentTrack");
         _currentTrack = currentTrack;
+    }
+
+    public String getCurrentTrackName()
+    {
+        return _currentTrackName;
     }
 
     public int getCurrentTime()

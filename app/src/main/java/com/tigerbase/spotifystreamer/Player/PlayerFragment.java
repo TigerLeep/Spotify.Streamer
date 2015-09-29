@@ -34,14 +34,14 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
 {
     private final static String LOG_TAG = PlayerFragment.class.getSimpleName();
 
-    private TextView _artistName;
-    private TextView _albumName;
-    private TextView _trackName;
-    private ProgressBar _playerBuffering;
-    private ImageView _albumThumbnail;
-    private SeekBar _progressSlider;
-    private TextView _playerCurrentTime;
-    private TextView _playerTotalTime;
+    private TextView _artistNameTextView;
+    private TextView _albumNameTextView;
+    private TextView _trackNameTextView;
+    private ProgressBar _playerBufferingProgressBar;
+    private ImageView _albumThumbnailImageView;
+    private SeekBar _progressSliderSeekBar;
+    private TextView _playerCurrentTimeTextView;
+    private TextView _playerTotalTimeTextView;
     private ImageButton _skipBackButton;
     private ImageButton _previousButton;
     private ImageButton _pauseButton;
@@ -51,6 +51,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
 
     private ArrayList<Track> _tracks = null;
     private int _currentTrack = 0;
+    private String _artistName = "";
     private int _duration = 0;
     private boolean _forceRestartIfDifferentTrack = false;
     private PlayerService _playerService = null;
@@ -217,18 +218,18 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     {
         Log.v(LOG_TAG, "displayCurrentTrack");
         Track track = _tracks.get(_currentTrack);
-        _artistName.setText(track.ArtistName); // Why no artist name on phone?
-        _albumName.setText(track.AlbumName);
-        _trackName.setText(track.Name);
+        _artistNameTextView.setText(_artistName);
+        _albumNameTextView.setText(track.AlbumName);
+        _trackNameTextView.setText(track.Name);
         if (track.ThumbnailImageUrl != null && !track.ThumbnailImageUrl.isEmpty())
         {
             Picasso.with(getActivity())
                     .load(track.ThumbnailImageUrl)
-                    .into(_albumThumbnail);
+                    .into(_albumThumbnailImageView);
         }
         else
         {
-            _albumThumbnail.setImageBitmap(null);
+            _albumThumbnailImageView.setImageBitmap(null);
         }
 
     }
@@ -239,8 +240,8 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         PlayerBinder playerBinder = (PlayerBinder)binder;
         _playerService = playerBinder.getService();
         ServiceMode serviceMode = _playerService.getMode();
-        boolean sameTrack = (_playerService.getCurrentTrack() == _currentTrack);
-        if (serviceMode == ServiceMode.Stopped || (_forceRestartIfDifferentTrack && !sameTrack))
+
+        if (serviceMode == ServiceMode.Stopped || (_forceRestartIfDifferentTrack && !isTrackPlaying()))
         {
             _playerService.setTracks(_tracks);
             _playerService.setCurrentTrack(_currentTrack);
@@ -277,15 +278,15 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     private void getViews(View view)
     {
         Log.v(LOG_TAG, "getViews");
-        _artistName = (TextView)view.findViewById(R.id.player_artist_name);
-        _albumName = (TextView)view.findViewById(R.id.player_album_name);
-        _trackName = (TextView)view.findViewById(R.id.player_track_name);
-        _playerBuffering = (ProgressBar)view.findViewById(R.id.player_buffering);
-        _albumThumbnail = (ImageView)view.findViewById(R.id.player_album_thumbnail);
-        _progressSlider = (SeekBar)view.findViewById(R.id.player_time_slider);
+        _artistNameTextView = (TextView)view.findViewById(R.id.player_artist_name);
+        _albumNameTextView = (TextView)view.findViewById(R.id.player_album_name);
+        _trackNameTextView = (TextView)view.findViewById(R.id.player_track_name);
+        _playerBufferingProgressBar = (ProgressBar)view.findViewById(R.id.player_buffering);
+        _albumThumbnailImageView = (ImageView)view.findViewById(R.id.player_album_thumbnail);
+        _progressSliderSeekBar = (SeekBar)view.findViewById(R.id.player_time_slider);
         _skipBackButton = (ImageButton)view.findViewById(R.id.player_skipback_button);
-        _playerCurrentTime = (TextView)view.findViewById(R.id.player_current_time);
-        _playerTotalTime = (TextView)view.findViewById(R.id.player_total_time);
+        _playerCurrentTimeTextView = (TextView)view.findViewById(R.id.player_current_time);
+        _playerTotalTimeTextView = (TextView)view.findViewById(R.id.player_total_time);
         _previousButton = (ImageButton)view.findViewById(R.id.player_previous_button);
         _pauseButton = (ImageButton)view.findViewById(R.id.player_pause_button);
         _playButton = (ImageButton)view.findViewById(R.id.player_play_button);
@@ -303,7 +304,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     {
         Log.v(LOG_TAG, "goToPreviousTrack");
         _playerService.previousTrack();
-        _currentTrack = _playerService.getCurrentTrack();
+        _currentTrack = _playerService.getCurrentTrackIndex();
         displayCurrentTrack();
     }
 
@@ -328,7 +329,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     {
         Log.v(LOG_TAG, "goToNextTrack");
         _playerService.nextTrack();
-        _currentTrack = _playerService.getCurrentTrack();
+        _currentTrack = _playerService.getCurrentTrackIndex();
         displayCurrentTrack();
     }
 
@@ -413,14 +414,14 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
                 skipForward();
             }
         });
-        _progressSlider.setOnSeekBarChangeListener(this);
+        _progressSliderSeekBar.setOnSeekBarChangeListener(this);
     }
 
     private void updateDuration(int milliseconds)
     {
         Log.v(LOG_TAG, "updateDuration");
-        _progressSlider.setMax(milliseconds);
-        _playerTotalTime.setText(formatMilliseconds(milliseconds));
+        _progressSliderSeekBar.setMax(milliseconds);
+        _playerTotalTimeTextView.setText(formatMilliseconds(milliseconds));
     }
 
     private void updateCurrentPosition(int milliseconds)
@@ -428,10 +429,10 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         //Log.v(LOG_TAG, "updateCurrentPosition");
         if (_shouldUpdateProgressBarAutomatically)
         {
-            _progressSlider.setMax(_duration);
-            _progressSlider.setProgress(milliseconds);
+            _progressSliderSeekBar.setMax(_duration);
+            _progressSliderSeekBar.setProgress(milliseconds);
         }
-        _playerCurrentTime.setText(formatMilliseconds(milliseconds));
+        _playerCurrentTimeTextView.setText(formatMilliseconds(milliseconds));
     }
 
     private String formatMilliseconds(int milliseconds)
@@ -459,6 +460,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         Log.v(LOG_TAG, "loadStateFromBundle");
         _tracks = bundle.getParcelableArrayList(getString(R.string.bundle_tracks));
         _currentTrack = bundle.getInt(getString(R.string.bundle_current_track));
+        _artistName = bundle.getString(getString(R.string.bundle_artist_name));
         if (bundle.containsKey(getString(R.string.bundle_duration)))
         {
             Log.v(LOG_TAG, "loadStateFromBundle: duration");
@@ -531,13 +533,29 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     private void showBuffering()
     {
         Log.v(LOG_TAG, "showBuffering");
-        _playerBuffering.setVisibility(View.VISIBLE);
+        _playerBufferingProgressBar.setVisibility(View.VISIBLE);
     }
 
     private void hideBuffering()
     {
         Log.v(LOG_TAG, "hideBuffering");
-        _playerBuffering.setVisibility(View.INVISIBLE);
+        _playerBufferingProgressBar.setVisibility(View.INVISIBLE);
+    }
+
+    private boolean isTrackPlaying()
+    {
+        Log.v(LOG_TAG, "isTrackPlaying");
+        boolean isPlaying = false;
+        ServiceMode serviceMode = _playerService.getMode();
+        if (serviceMode == ServiceMode.Playing || serviceMode == ServiceMode.Paused)
+        {
+            int currentPlayingTrack = _playerService.getCurrentTrackIndex();
+            String currentPlayingName = _playerService.getCurrentTrackName();
+            isPlaying = (currentPlayingTrack == _currentTrack
+                        && currentPlayingName.equals(_tracks.get(_currentTrack).Name));
+        }
+
+        return isPlaying;
     }
 
 }

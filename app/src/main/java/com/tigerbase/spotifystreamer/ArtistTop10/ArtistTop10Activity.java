@@ -12,7 +12,7 @@ import com.tigerbase.spotifystreamer.R;
 
 public class ArtistTop10Activity extends AppCompatActivity
 {
-    private final String LOG_TAG = ArtistTop10Activity.class.getName();
+    private final String LOG_TAG = ArtistTop10Activity.class.getSimpleName();
     private final String ARTIST_TOP10_FRAGMENT_TAG = ArtistTop10Fragment.class.getSimpleName();
 
     private ArtistTop10Fragment _artistTop10Fragment;

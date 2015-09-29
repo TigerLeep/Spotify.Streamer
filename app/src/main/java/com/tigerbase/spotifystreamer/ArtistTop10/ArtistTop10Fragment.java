@@ -263,10 +263,10 @@ public class ArtistTop10Fragment extends Fragment
 
     private void loadTracksFromSpotifyTracks(Tracks spotifyTracks)
     {
+        Log.v(LOG_TAG, "loadTracksFromSpotifyTracks");
         for (kaaes.spotify.webapi.android.models.Track spotifyTrack : spotifyTracks.tracks)
         {
             Track track = new Track(spotifyTrack);
-            track.ArtistName = _artistName;
             _tracks.add(track);
         }
     }
@@ -330,6 +330,7 @@ public class ArtistTop10Fragment extends Fragment
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
         bundle.putInt(getString(R.string.bundle_current_track), _currentTrack);
+        bundle.putString(getString(R.string.bundle_artist_name), _artistName);
         bundle.putBoolean(getString(R.string.bundle_force_restart_if_different_track), true);
         return bundle;
     }

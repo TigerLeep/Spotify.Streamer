@@ -15,7 +15,6 @@ public class Track implements Parcelable
     public String Name = "";
     public String ThumbnailImageUrl = "";
     public String AlbumName = "";
-    public String ArtistName = "";
     public String PreviewUrl = "";
 
     public Track()

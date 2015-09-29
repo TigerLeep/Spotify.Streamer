@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 public class PlayerActivity extends AppCompatActivity
 {
-    private final String LOG_TAG = PlayerActivity.class.getName();
+    private final String LOG_TAG = PlayerActivity.class.getSimpleName();
     private final String PLAYER_FRAGMENT_TAG = PlayerFragment.class.getSimpleName();
 
     private PlayerFragment _playerFragment;
@@ -26,15 +26,7 @@ public class PlayerActivity extends AppCompatActivity
         setContentView(R.layout.activity_player);
 
         Intent intent = getIntent();
-        Bundle bundle = new Bundle();
-        if (intent != null)
-        {
-            ArrayList<Track> tracks = intent.getParcelableArrayListExtra(getString(R.string.bundle_tracks));
-            int currentTrack = intent.getIntExtra(getString(R.string.bundle_current_track), 0);
-
-            bundle.putParcelableArrayList(getString(R.string.bundle_tracks), tracks);
-            bundle.putInt(getString(R.string.bundle_current_track), currentTrack);
-        }
+        Bundle bundle = (intent != null ? intent.getExtras() : new Bundle());
 
         _playerFragment =
                 (PlayerFragment)getSupportFragmentManager()

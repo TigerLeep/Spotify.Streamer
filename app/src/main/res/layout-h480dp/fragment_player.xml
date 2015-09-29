@@ -33,14 +33,14 @@
 
         <ImageView
             android:id="@+id/player_album_thumbnail"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
             android:src="@mipmap/ic_launcher"
             />
         <ProgressBar
             android:id="@+id/player_buffering"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
             android:indeterminate="true"
             android:visibility="invisible"
             />
