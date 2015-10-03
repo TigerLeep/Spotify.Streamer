@@ -14,7 +14,7 @@
         android:id="@+id/artist_search_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Artist name"
+        android:hint="@string/hint_artist_name"
         android:text=""
         android:inputType="textCapWords"
         />
@@ -22,5 +22,6 @@
         android:id="@+id/artist_search_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        style="@style/choiceMode"
         />
 </LinearLayout>

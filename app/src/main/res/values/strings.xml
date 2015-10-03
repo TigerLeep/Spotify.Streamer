@@ -4,16 +4,8 @@
     <string name="top_tracks_name">Top 10 Tracks</string>
     <string name="intent_extra_artist_id">Artist_Id</string>
     <string name="intent_extra_artist_name">Artist_Name</string>
-    <string name="artist_search_fragment_tag">ArtistSearchActivityFragment</string>
-    <string name="artists_state_tag">Artists</string>
-    <string name="partial_name_state_tag">PartialName</string>
     <string name="no_artists_found">No artists were found.  Please adjust your search.</string>
     <string name="no_tracks_found">No tracks were found.  Please select a different artist.</string>
-    <string name="iplayerhost_error">%1$s must implement IPlayerHost.</string>
-    <string name="player_ok_text">OK</string>
-    <string name="player_cancel_text">Cancel</string>
-    <string name="player_next_text">Next</string>
-    <string name="player_previous_text">Prev</string>
     <string name="player_name">Preview</string>
     <string name="notification_playing_message">%s (playing)</string>
     <string name="notification_buffering_message">%s (buffering)</string>
@@ -21,6 +13,18 @@
     <string name="bundle_current_track">current_track</string>
     <string name="bundle_artist_name">artist_name</string>
     <string name="bundle_duration">duration</string>
-    <string name="bundle_is_playing">is_playing</string>
     <string name="bundle_force_restart_if_different_track">force_restart</string>
+    <string name="hint_artist_name">Artist name</string>
+    <string name="description_rewind_button">rewind</string>
+    <string name="description_previous_button">previous</string>
+    <string name="description_pause_button">pause</string>
+    <string name="description_play_button">play</string>
+    <string name="description_next_button">next</string>
+    <string name="description_forward_button">forward</string>
+    <string name="default_player_current_time">0:00</string>
+    <string name="default_player_duration">0:30</string>
+    <string name="description_artist_track">Artist Track</string>
+    <string name="description_artist">Artist</string>
+    <string name="track_has_no_preview">Selected track has no preview available.</string>
+    <string name="bundle_play_button_visible">play_button_visible</string>
 </resources>

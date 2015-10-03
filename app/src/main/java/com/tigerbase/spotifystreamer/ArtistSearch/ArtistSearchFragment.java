@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.ArtistSearch;
+package com.tigerbase.spotifystreamer.artistsearch;
 
 import android.support.v4.app.Fragment;
 import android.os.AsyncTask;
@@ -67,7 +67,6 @@ public class ArtistSearchFragment extends Fragment
     {
         _adapter = new ArtistAdapter(
                 getActivity(),
-                R.layout.list_item_artist,
                 new ArrayList<Artist>());
     }
 
@@ -79,9 +78,16 @@ public class ArtistSearchFragment extends Fragment
         _listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                Log.v(LOG_TAG, "setOnItemClickListener.onItemClick");
+                selectArtist(position);
+            }
+
+            private void selectArtist(int position)
+            {
+                Log.v(LOG_TAG, "setOnItemClickListener.selectArtist");
                 Artist artist = _adapter.getItem(position);
                 if (getActivity() instanceof IArtistList) {
-                    Log.v(LOG_TAG, "instanceof IArtistList");
+                    Log.v(LOG_TAG, "setOnItemClickListener.selectArtist: instanceof IArtistList");
                     ((IArtistList) getActivity()).onArtistSelected(artist.Id, artist.Name);
                 }
             }

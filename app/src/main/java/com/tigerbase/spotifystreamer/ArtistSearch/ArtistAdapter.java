@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.ArtistSearch;
+package com.tigerbase.spotifystreamer.artistsearch;
 
 import android.content.Context;
 import android.util.Log;
@@ -19,14 +19,9 @@ public class ArtistAdapter extends ArrayAdapter<Artist>
 {
     private final String LOG_TAG = ArtistAdapter.class.getSimpleName();
 
-    public ArtistAdapter(Context context, int textViewResourceId)
+    public ArtistAdapter(Context context, ArrayList<Artist> artists)
     {
-        super(context, textViewResourceId);
-    }
-
-    public ArtistAdapter(Context context, int resource, ArrayList<Artist> artists)
-    {
-        super(context, resource, artists);
+        super(context, R.layout.list_item_artist, artists);
     }
 
     @Override
@@ -34,18 +29,24 @@ public class ArtistAdapter extends ArrayAdapter<Artist>
     {
         Log.v(LOG_TAG, "getView");
 
-        View artistListItemView = (convertView == null)
-                ? getArtistListItemViewFromLayout(parent)
-                : convertView;
-
+        View artistListItemView = getArtistListItemView(convertView, parent);
         Artist artist = getItem(position);
         loadArtistListItemView(artistListItemView, artist);
 
         return artistListItemView;
     }
 
+    private View getArtistListItemView(View convertView, ViewGroup parent)
+    {
+        Log.v(LOG_TAG, "getArtistListItemView");
+        return (convertView == null)
+                ? getArtistListItemViewFromLayout(parent)
+                : convertView;
+    }
+
     private View getArtistListItemViewFromLayout(ViewGroup parent)
     {
+        Log.v(LOG_TAG, "getArtistListItemViewFromLayout");
         View view;
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
@@ -56,30 +57,50 @@ public class ArtistAdapter extends ArrayAdapter<Artist>
 
     private void loadArtistListItemView(View artistListItemView, Artist artist)
     {
-        if (artist != null)
+        Log.v(LOG_TAG, "loadArtistListItemView");
+
+        if (artist == null)
         {
-            ImageView thumbnailImageView = (ImageView) artistListItemView.findViewById(R.id.list_item_artist_thumbnail);
-            TextView nameTextView = (TextView) artistListItemView.findViewById(R.id.list_item_artist_name);
+            return;
+        }
 
-            if (thumbnailImageView != null)
-            {
-                // Load the image from its Url into the ImageView
-                if (artist.ThumbnailImageUrl != null && !artist.ThumbnailImageUrl.isEmpty())
-                {
-                    Picasso.with(getContext())
-                            .load(artist.ThumbnailImageUrl)
-                            .into(thumbnailImageView);
-                }
-                else
-                {
-                    thumbnailImageView.setImageBitmap(null);
-                }
-            }
+        loadArtistImage(artistListItemView, artist);
+        loadArtistName(artistListItemView, artist);
+    }
 
-            if (nameTextView != null)
-            {
-                nameTextView.setText(artist.Name);
-            }
+    private void loadArtistImage(View artistListItemView, Artist artist)
+    {
+        Log.v(LOG_TAG, "loadArtistImage");
+
+        ImageView thumbnailImageView = (ImageView) artistListItemView.findViewById(R.id.list_item_artist_thumbnail);
+        if (thumbnailImageView != null)
+        {
+            loadImageIntoImageView(artist, thumbnailImageView);
+        }
+    }
+
+    private void loadImageIntoImageView(Artist artist, ImageView thumbnailImageView)
+    {
+        Log.v(LOG_TAG, "loadImageIntoImageView");
+        if (artist.ThumbnailImageUrl != null && !artist.ThumbnailImageUrl.isEmpty())
+        {
+            Picasso.with(getContext())
+                    .load(artist.ThumbnailImageUrl)
+                    .into(thumbnailImageView);
+        }
+        else
+        {
+            thumbnailImageView.setImageBitmap(null);
+        }
+    }
+
+    private void loadArtistName(View artistListItemView, Artist artist)
+    {
+        Log.v(LOG_TAG, "loadArtistName");
+        TextView nameTextView = (TextView) artistListItemView.findViewById(R.id.list_item_artist_name);
+        if (nameTextView != null)
+        {
+            nameTextView.setText(artist.Name);
         }
     }
 

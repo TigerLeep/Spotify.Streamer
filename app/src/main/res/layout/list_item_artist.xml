@@ -6,14 +6,16 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    tools:context=".ArtistSearchActivityFragment">
+    android:background="@drawable/touch_selector"
+    tools:context=".ArtistSearchActivityFragment"
+    >
 
     <ImageView
         android:id="@+id/list_item_artist_thumbnail"
         android:layout_width="75dip"
         android:layout_height="75dip"
         android:padding="10dip"
-        android:src="@mipmap/ic_launcher"
+        android:contentDescription="@string/description_artist"
         />
     <TextView
         android:id="@+id/list_item_artist_name"
@@ -21,6 +23,5 @@
         android:layout_height="wrap_content"
         android:paddingLeft="5dip"
         android:paddingRight="5dip"
-        android:text="Katy Perry"
         />
 </LinearLayout>

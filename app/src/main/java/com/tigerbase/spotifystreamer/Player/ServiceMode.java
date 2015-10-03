@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.Player;
+package com.tigerbase.spotifystreamer.player;
 
 enum ServiceMode
 {

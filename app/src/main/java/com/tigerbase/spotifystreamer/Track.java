@@ -81,7 +81,7 @@ public class Track implements Parcelable
         Image thumbnailImage = null;
         for (Image image : album.images)
         {
-            if (thumbnailImage == null || image.width >= 640 && image.width < thumbnailImage.width)
+            if (thumbnailImage == null || (image.width >= 640 && image.width < thumbnailImage.width))
             {
                 thumbnailImage = image;
             }

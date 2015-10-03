@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.ArtistTop10;
+package com.tigerbase.spotifystreamer.artisttop10;
 
 import android.support.v4.app.Fragment;
 import android.content.Intent;
@@ -14,8 +14,8 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.tigerbase.spotifystreamer.Player.PlayerActivity;
-import com.tigerbase.spotifystreamer.Player.PlayerFragment;
+import com.tigerbase.spotifystreamer.player.PlayerActivity;
+import com.tigerbase.spotifystreamer.player.PlayerFragment;
 import com.tigerbase.spotifystreamer.R;
 import com.tigerbase.spotifystreamer.Track;
 
@@ -97,7 +97,6 @@ public class ArtistTop10Fragment extends Fragment
         Log.v(LOG_TAG, "initializeArtistTop10Adapter");
         _adapter = new ArtistTop10Adapter(
                 getActivity(),
-                R.layout.list_item_artist_top10,
                 new ArrayList<Track>());
     }
 
@@ -293,11 +292,25 @@ public class ArtistTop10Fragment extends Fragment
         _artistId = id;
         _artistName = name;
         loadAlbums();
+        clearArtistTop10Selection();
     }
 
-    public void onTrackSelected(int position)
+    private void clearArtistTop10Selection()
+    {
+        Log.v(LOG_TAG, "clearArtistTop10Selection");
+        _listView.clearChoices();
+        _adapter.notifyDataSetChanged();
+    }
+
+    private void onTrackSelected(int position)
     {
         Log.v(LOG_TAG, "onTrackSelected");
+
+        if(doesSelectedTrackHavePreviewAvailable(position) == false)
+        {
+            showNoPreviewMessage();
+            return;
+        }
 
         _currentTrack = position;
 
@@ -313,6 +326,24 @@ public class ArtistTop10Fragment extends Fragment
             dialog.setArguments(bundle);
             dialog.show(getActivity().getSupportFragmentManager(), PLAYER_DIALOG_TAG);
         }
+    }
+
+    private void showNoPreviewMessage()
+    {
+        Log.v(LOG_TAG, "showNoPreviewMessage");
+        String message = getActivity().getString(R.string.track_has_no_preview);
+        Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    private boolean doesSelectedTrackHavePreviewAvailable(int position)
+    {
+        Log.v(LOG_TAG, "doesSelectedTrackHavePreviewAvailable");
+
+        if (position >= 0 && position < _tracks.size())
+        {
+            return _tracks.get(position).PreviewUrl != null;
+        }
+        return false;
     }
 
     private Intent createPlayerIntent()

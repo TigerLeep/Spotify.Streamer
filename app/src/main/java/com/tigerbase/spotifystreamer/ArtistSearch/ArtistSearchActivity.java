@@ -1,19 +1,19 @@
-package com.tigerbase.spotifystreamer.ArtistSearch;
+package com.tigerbase.spotifystreamer.artistsearch;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.tigerbase.spotifystreamer.ArtistTop10.ArtistTop10Activity;
-import com.tigerbase.spotifystreamer.ArtistTop10.ArtistTop10Fragment;
+import com.tigerbase.spotifystreamer.artisttop10.ArtistTop10Activity;
+import com.tigerbase.spotifystreamer.artisttop10.ArtistTop10Fragment;
 import com.tigerbase.spotifystreamer.IArtistList;
 import com.tigerbase.spotifystreamer.R;
 
-public class ArtistSearchActivity extends ActionBarActivity implements IArtistList
+public class ArtistSearchActivity extends AppCompatActivity implements IArtistList
 {
     private static final String LOG_TAG = ArtistSearchActivity.class.getSimpleName();
     private static final String TOP10FRAGMENT_TAG = "TOP10FRAGMENTTAG";
@@ -25,16 +25,9 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
     {
         Log.v(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_artist_search);
 
-        if (findViewById(R.id.artist_top10_container) != null)
-        {
-            initializeTwoPane(savedInstanceState);
-        }
-        else
-        {
-            initializeOnePane();
-        }
+        setContentView(R.layout.activity_artist_search);
+        initializeOneOrTwoPane(savedInstanceState);
     }
 
     @Override
@@ -76,7 +69,7 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
     public boolean onCreateOptionsMenu(Menu menu)
     {
         Log.v(LOG_TAG, "onCreateOptionsMenu");
-        getMenuInflater().inflate(R.menu.menu_artist_search, menu);
+        //getMenuInflater().inflate(R.menu.menu_artist_search, menu);
         return true;
     }
 
@@ -84,9 +77,6 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
     public boolean onOptionsItemSelected(MenuItem item)
     {
         Log.v(LOG_TAG, "onOptionsItemSelected");
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         if (id == R.id.action_settings)
@@ -108,22 +98,32 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
     public void onArtistSelected(String id, String name)
     {
         Log.v(LOG_TAG, "onArtistSelected: id=[" + id + "], name=[" + name + "]");
-        if(!_twoPane)
+
+        navigateToArtistTop10Pane(id, name);
+    }
+
+    private void initializeOneOrTwoPane(Bundle savedInstanceState)
+    {
+        Log.v(LOG_TAG, "initializeOneOrTwoPane");
+        if (findViewById(R.id.artist_top10_container) != null)
         {
-            launchArtistTop10Activity(id, name);
+            initializeTwoPane(savedInstanceState);
         }
         else
         {
-            informArtistTop10FragmentArtistChanged(id, name);
+            initializeOnePane();
         }
     }
-
 
     private void initializeOnePane()
     {
         Log.v(LOG_TAG, "initializeOnePane");
         _twoPane = false;
-        getSupportActionBar().setElevation(0f);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null)
+        {
+            actionBar.setElevation(0f);
+        }
     }
 
     private void initializeTwoPane(Bundle savedInstanceState)
@@ -132,14 +132,32 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
         _twoPane = true;
         if (savedInstanceState == null)
         {
-            Log.v(LOG_TAG, "initializeTwoPane - savedInstanceState == null");
-            ArtistTop10Fragment top10Fragment = new ArtistTop10Fragment();
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.artist_top10_container,
-                            top10Fragment,
-                            TOP10FRAGMENT_TAG)
-                    .commit();
+            loadArtistTop10FragmentInTwoPane();
+        }
+    }
+
+    private void loadArtistTop10FragmentInTwoPane()
+    {
+        Log.v(LOG_TAG, "loadArtistTop10FragmentInTwoPane");
+        ArtistTop10Fragment top10Fragment = new ArtistTop10Fragment();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.artist_top10_container,
+                        top10Fragment,
+                        TOP10FRAGMENT_TAG)
+                .commit();
+    }
+
+    private void navigateToArtistTop10Pane(String id, String name)
+    {
+        Log.v(LOG_TAG, "navigateToArtistTop10Pane");
+        if(_twoPane)
+        {
+            informArtistTop10FragmentArtistChanged(id, name);
+        }
+        else
+        {
+            launchArtistTop10ActivityWithChangedArtist(id, name);
         }
     }
 
@@ -154,9 +172,9 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
         }
     }
 
-    private void launchArtistTop10Activity(String id, String name)
+    private void launchArtistTop10ActivityWithChangedArtist(String id, String name)
     {
-        Log.v(LOG_TAG, "launchArtistTop10Activity");
+        Log.v(LOG_TAG, "launchArtistTop10ActivityWithChangedArtist");
 
         Intent intent = createArtistTop10Intent(id, name);
         startActivity(intent);
@@ -166,11 +184,18 @@ public class ArtistSearchActivity extends ActionBarActivity implements IArtistLi
     {
         Log.v(LOG_TAG, "createArtistTop10Intent");
         Intent intent = new Intent(this, ArtistTop10Activity.class);
+        Bundle extras = CreateArtistTop10IntentBundle(id, name);
+        intent.putExtras(extras);
+        return intent;
+    }
+
+    private Bundle CreateArtistTop10IntentBundle(String id, String name)
+    {
+        Log.v(LOG_TAG, "CreateArtistTop10IntentBundle");
         Bundle extras = new Bundle();
         extras.putString(getString(R.string.intent_extra_artist_id), id);
         extras.putString(getString(R.string.intent_extra_artist_name), name);
-        intent.putExtras(extras);
-        return intent;
+        return extras;
     }
 
 }

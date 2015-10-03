@@ -6,4 +6,8 @@
         <item name="colorPrimaryDark">@color/spotify_dark_green</item>
     </style>
 
+    <style name="choiceMode">
+        <item name="android:choiceMode">none</item>
+    </style>
+
 </resources>

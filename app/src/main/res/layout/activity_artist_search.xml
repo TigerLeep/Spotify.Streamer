@@ -2,10 +2,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/forecast_artist_search"
-    android:name="com.tigerbase.spotifystreamer.ArtistSearch.ArtistSearchFragment"
+    android:name="com.tigerbase.spotifystreamer.artistsearch.ArtistSearchFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.tigerbase.spotifystreamer.ArtistSearch.ArtistSearchFragment"
+    tools:context="com.tigerbase.spotifystreamer.artistsearch.ArtistSearchFragment"
     tools:layout="@android:layout/list_content"
     >
 </fragment>

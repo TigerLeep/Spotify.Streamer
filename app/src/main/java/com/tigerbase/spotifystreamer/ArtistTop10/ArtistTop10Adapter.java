@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.ArtistTop10;
+package com.tigerbase.spotifystreamer.artisttop10;
 
 import android.content.Context;
 import android.util.Log;
@@ -19,20 +19,65 @@ public class ArtistTop10Adapter extends ArrayAdapter<Track>
 {
     private final static String LOG_TAG = ArtistTop10Adapter.class.getSimpleName();
 
-    public ArtistTop10Adapter(Context context, int textViewResourceId)
+    public ArtistTop10Adapter(Context context, ArrayList<Track> artists)
     {
-        super(context, textViewResourceId);
-    }
-
-    public ArtistTop10Adapter(Context context, int resource, ArrayList<Track> artists)
-    {
-        super(context, resource, artists);
+        super(context, R.layout.list_item_artist_top10, artists);
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent)
     {
         Log.v(LOG_TAG, "getView");
+
+        View view = getListItemView(convertView, parent);
+        Track track = getItem(position);
+
+        if (track == null)
+        {
+            return view;
+        }
+
+        ImageView thumbnailImageView = (ImageView) view.findViewById(R.id.artist_top10_list_item_thumbnail);
+        TextView trackTextView = (TextView) view.findViewById(R.id.artist_top10_list_item_track);
+        TextView albumTextView = (TextView) view.findViewById(R.id.artist_top10_list_item_album);
+
+        loadImageIntoImageView(thumbnailImageView, track.ThumbnailImageUrl);
+        loadTextIntoTextView(albumTextView, track.AlbumName);
+        loadTextIntoTextView(trackTextView, track.Name);
+
+        return view;
+    }
+
+    private void loadTextIntoTextView(TextView albumTextView, String albumName)
+    {
+        Log.v(LOG_TAG, "loadTextIntoTextView");
+        if (albumTextView != null)
+        {
+            albumTextView.setText(albumName);
+        }
+    }
+
+    private void loadImageIntoImageView(ImageView thumbnailImageView, String imageUrl)
+    {
+        Log.v(LOG_TAG, "loadImageIntoImageView");
+        if (thumbnailImageView != null)
+        {
+            if (imageUrl != null && !imageUrl.isEmpty())
+            {
+                Picasso.with(getContext())
+                        .load(imageUrl)
+                        .into(thumbnailImageView);
+            }
+            else
+            {
+                thumbnailImageView.setImageBitmap(null);
+            }
+        }
+    }
+
+    private View getListItemView(View convertView, ViewGroup parent)
+    {
+        Log.v(LOG_TAG, "getListItemView");
         View view = convertView;
 
         if (view == null)
@@ -40,40 +85,6 @@ public class ArtistTop10Adapter extends ArrayAdapter<Track>
             LayoutInflater inflater = LayoutInflater.from(getContext());
             view = inflater.inflate(R.layout.list_item_artist_top10, parent, false);
         }
-
-        Track track = getItem(position);
-
-        if (track != null)
-        {
-            ImageView thumbnailImageView = (ImageView) view.findViewById(R.id.artist_top10_list_item_thumbnail);
-            TextView trackTextView = (TextView) view.findViewById(R.id.artist_top10_list_item_track);
-            TextView albumTextView = (TextView) view.findViewById(R.id.artist_top10_list_item_album);
-
-            if (thumbnailImageView != null)
-            {
-                // Load the image from its Url into the ImageView
-                if (track.ThumbnailImageUrl != null && !track.ThumbnailImageUrl.isEmpty())
-                {
-                    Picasso.with(getContext())
-                            .load(track.ThumbnailImageUrl)
-                            .into(thumbnailImageView);
-                }
-                else
-                {
-                    thumbnailImageView.setImageBitmap(null);
-                }
-            }
-
-            if (albumTextView != null)
-            {
-                albumTextView.setText(track.AlbumName);
-            }
-            if (trackTextView != null)
-            {
-                trackTextView.setText(track.Name);
-            }
-        }
-
         return view;
     }
 }

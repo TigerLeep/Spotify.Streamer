@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.ArtistTop10;
+package com.tigerbase.spotifystreamer.artisttop10;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -6,7 +6,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.tigerbase.spotifystreamer.Player.PlayerFragment;
 import com.tigerbase.spotifystreamer.R;
 
 
@@ -15,15 +14,13 @@ public class ArtistTop10Activity extends AppCompatActivity
     private final String LOG_TAG = ArtistTop10Activity.class.getSimpleName();
     private final String ARTIST_TOP10_FRAGMENT_TAG = ArtistTop10Fragment.class.getSimpleName();
 
-    private ArtistTop10Fragment _artistTop10Fragment;
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         Log.v(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_artist_top10);
 
+        setContentView(R.layout.activity_artist_top10);
         initializeArtistTop10Fragment();
     }
 
@@ -63,19 +60,27 @@ public class ArtistTop10Activity extends AppCompatActivity
 
     private void initializeArtistTop10Fragment()
     {
-        _artistTop10Fragment =
-                (ArtistTop10Fragment)getSupportFragmentManager()
-                        .findFragmentByTag(ARTIST_TOP10_FRAGMENT_TAG);
-        if (_artistTop10Fragment == null)
-        {
-            _artistTop10Fragment = new ArtistTop10Fragment();
-        }
+        Log.v(LOG_TAG, "initializeArtistTop10Fragment");
+        ArtistTop10Fragment artistTop10Fragment = getArtistTop10Fragment();
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.activity_artist_top10_container,
-                        _artistTop10Fragment,
+                        artistTop10Fragment,
                         ARTIST_TOP10_FRAGMENT_TAG)
                 .commit();
+    }
+
+    private ArtistTop10Fragment getArtistTop10Fragment()
+    {
+        Log.v(LOG_TAG, "getArtistTop10Fragment");
+        ArtistTop10Fragment artistTop10Fragment =
+                (ArtistTop10Fragment)getSupportFragmentManager()
+                        .findFragmentByTag(ARTIST_TOP10_FRAGMENT_TAG);
+        if (artistTop10Fragment == null)
+        {
+            artistTop10Fragment = new ArtistTop10Fragment();
+        }
+        return artistTop10Fragment;
     }
 
 }

@@ -1,6 +1,7 @@
-package com.tigerbase.spotifystreamer.Player;
+package com.tigerbase.spotifystreamer.player;
 
-enum AudioFocus {
+enum AudioFocus
+{
     Focused,
     NotFocused,
     Ducked

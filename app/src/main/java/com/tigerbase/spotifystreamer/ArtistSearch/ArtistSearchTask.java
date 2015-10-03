@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.ArtistSearch;
+package com.tigerbase.spotifystreamer.artistsearch;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
+
 import retrofit.RetrofitError;
 
 public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
@@ -50,7 +51,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
         }
 
         String artistPartialName = params[0];
-        ArtistsPager artistsPager = CallSpotifySearchApi(artistPartialName);
+        ArtistsPager artistsPager = callSpotifySearchApi(artistPartialName);
 
         return getArtistParcelablesFromArtistsPager(artistsPager);
     }
@@ -67,20 +68,18 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
 
     private boolean areParametersValid(String[] params)
     {
+        Log.e(LOG_TAG, "areParametersValid");
         if (params.length != 1)
         {
             Log.e(LOG_TAG, "Invalid parameters passed to ArtistSearchTask.doInBackground");
             return false;
         }
-        if(params[0].length() == 0)
-        {
-            return false;
-        }
-        return true;
+        return params[0].length() != 0;
     }
 
     private void delayToPreventRapidFireApiCalls()
     {
+        Log.e(LOG_TAG, "delayToPreventRapidFireApiCalls");
         try
         {
             Thread.sleep(200);
@@ -91,11 +90,16 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
         }
     }
 
-    private ArtistsPager CallSpotifySearchApi(String artistPartialName)
+    private ArtistsPager callSpotifySearchApi(String artistPartialName)
     {
-        artistPartialName = GetStartsWithSearchQuery(artistPartialName);
+        Log.e(LOG_TAG, "callSpotifySearchApi");
+        artistPartialName = getStartsWithSearchQuery(artistPartialName);
+        return getArtistPagerFromSpotifyApi(artistPartialName);
+    }
 
-        // Call the spotify API to get a list of matching artists
+    private ArtistsPager getArtistPagerFromSpotifyApi(String artistPartialName)
+    {
+        Log.e(LOG_TAG, "getArtistPagerFromSpotifyApi");
         SpotifyApi api = new SpotifyApi();
         SpotifyService spotify = api.getService();
         ArtistsPager artistsPager = null;
@@ -110,14 +114,15 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
         return artistsPager;
     }
 
-    private String GetStartsWithSearchQuery(String param)
+    private String getStartsWithSearchQuery(String param)
     {
-        //
+        Log.e(LOG_TAG, "getStartsWithSearchQuery");
         return param.replace(" ", "* ") + "*";
     }
 
     private ArrayList<Artist> getArtistParcelablesFromArtistsPager(ArtistsPager artistsPager)
     {
+        Log.e(LOG_TAG, "getArtistParcelablesFromArtistsPager");
         ArrayList<Artist> artists = new ArrayList<>();
         if (artistsPager != null)
         {
@@ -131,6 +136,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
 
     private void loadArtists(ArrayList<Artist> artists)
     {
+        Log.e(LOG_TAG, "loadArtists");
         _artists.clear();
         _adapter.clear();
 
@@ -140,6 +146,7 @@ public class ArtistSearchTask extends AsyncTask<String, Void, ArrayList<Artist>>
 
     private void showMessageIfNoArtistsFound(ArrayList<Artist> artists)
     {
+        Log.e(LOG_TAG, "showMessageIfNoArtistsFound");
         if (artists == null || artists.isEmpty())
         {
             String message = _context.getString(R.string.no_artists_found);

@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.Player;
+package com.tigerbase.spotifystreamer.player;
 
 import android.app.Dialog;
 import android.content.ComponentName;
@@ -9,7 +9,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,8 +24,8 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 import com.tigerbase.spotifystreamer.R;
 import com.tigerbase.spotifystreamer.Track;
-import com.tigerbase.spotifystreamer.Player.PlayerService.PlayerBinder;
-import com.tigerbase.spotifystreamer.Player.PlayerReceiver.Receivable;
+import com.tigerbase.spotifystreamer.player.PlayerService.PlayerBinder;
+import com.tigerbase.spotifystreamer.player.PlayerReceiver.Receivable;
 
 import java.util.ArrayList;
 
@@ -72,6 +71,12 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
                 Log.v(LOG_TAG, "run: !isAdded");
                 return;
             }
+            updateCurrentPlayTime();
+        }
+
+        private void updateCurrentPlayTime()
+        {
+            Log.v(LOG_TAG, "updateCurrentPlayTime");
             int milliseconds = _playerService.getCurrentTime();
             if (milliseconds != PlayerService.DURATION_INVALID)
             {
@@ -114,38 +119,18 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
 
         getViews(view);
         bindListeners();
-
-        Bundle bundle = getIncomingStateBundle(savedInstanceState);
-        if (bundle != null)
-        {
-            Log.v(LOG_TAG, "onCreateView: bundle");
-            loadStateFromBundle(bundle);
-            if(_isPlayerServiceBound &&
-                    (_playerService.getMode() == ServiceMode.Playing
-                     || _playerService.getMode() == ServiceMode.Paused))
-            {
-                _currentTimeUpdater.run();
-            }
-            displayCurrentTrack();
-        }
-
-        if (_playerReceiver == null)
-        {
-            _playerReceiver = new PlayerReceiver(new Handler());
-        }
-        _playerReceiver.setReceiver(this);
+        loadSavedStateIfAnyAndUpdateUI(savedInstanceState);
+        initializePlayerReceiver();
 
         return view;
     }
 
-    @NonNull @Override
+    @Override
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
         Log.v(LOG_TAG, "onCreateDialog");
-        Dialog playerDialog = super.onCreateDialog(savedInstanceState);
-        playerDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setRetainInstance(true);
-        return playerDialog;
+
+        return initializeDialog(savedInstanceState);
     }
 
     @Override
@@ -168,7 +153,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         outState.putParcelableArrayList(getString(R.string.bundle_tracks), _tracks);
         outState.putInt(getString(R.string.bundle_current_track), _currentTrack);
         outState.putInt(getString(R.string.bundle_duration), _duration);
-        //outState.putParcelable(getString(R.string.player_receiver_tag), _playerReceiver);
+        outState.putBoolean(getString(R.string.bundle_play_button_visible), _playButton.getVisibility() == View.VISIBLE);
     }
 
     @Override
@@ -214,48 +199,122 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         _shouldUpdateProgressBarAutomatically = true;
     }
 
+    private void loadSavedStateIfAnyAndUpdateUI(Bundle savedInstanceState)
+    {
+        Log.v(LOG_TAG, "loadSavedStateIfAnyAndUpdateUI");
+        Bundle bundle = getIncomingStateBundle(savedInstanceState);
+        if (bundle != null)
+        {
+            loadStateFromBundle(bundle);
+            if(isPlayerServiceBoundAndPlayingOrPaused())
+            {
+                _currentTimeUpdater.run();
+            }
+            displayCurrentTrack();
+        }
+    }
+
+    private boolean isPlayerServiceBoundAndPlayingOrPaused()
+    {
+        Log.v(LOG_TAG, "isPlayerServiceBoundAndPlayingOrPaused");
+        return _isPlayerServiceBound &&
+                (isPlayerServicePlayingOrPaused(_playerService.getMode()));
+    }
+
+    private void initializePlayerReceiver()
+    {
+        Log.v(LOG_TAG, "initializePlayerReceiver");
+        if (_playerReceiver == null)
+        {
+            _playerReceiver = new PlayerReceiver(new Handler());
+        }
+        _playerReceiver.setReceiver(this);
+    }
+
+    private Dialog initializeDialog(Bundle savedInstanceState)
+    {
+        Log.v(LOG_TAG, "initializeDialog");
+        Dialog playerDialog = super.onCreateDialog(savedInstanceState);
+        playerDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setRetainInstance(true);
+        return playerDialog;
+    }
+
     private void displayCurrentTrack()
     {
         Log.v(LOG_TAG, "displayCurrentTrack");
+
         Track track = _tracks.get(_currentTrack);
         _artistNameTextView.setText(_artistName);
         _albumNameTextView.setText(track.AlbumName);
         _trackNameTextView.setText(track.Name);
-        if (track.ThumbnailImageUrl != null && !track.ThumbnailImageUrl.isEmpty())
+        loadImageIntoImageView(_albumThumbnailImageView, track.ThumbnailImageUrl);
+
+    }
+
+    private void loadImageIntoImageView(ImageView imageView, String imageUrl)
+    {
+        Log.v(LOG_TAG, "loadImageIntoImageView");
+        if (imageUrl != null && !imageUrl.isEmpty())
         {
             Picasso.with(getActivity())
-                    .load(track.ThumbnailImageUrl)
-                    .into(_albumThumbnailImageView);
+                    .load(imageUrl)
+                    .into(imageView);
         }
         else
         {
-            _albumThumbnailImageView.setImageBitmap(null);
+            imageView.setImageBitmap(null);
         }
-
     }
 
     private void bindToPlayerService(IBinder binder)
     {
         Log.v(LOG_TAG, "bindToPlayerService");
-        PlayerBinder playerBinder = (PlayerBinder)binder;
-        _playerService = playerBinder.getService();
+
+        getPlayerService((PlayerBinder) binder);
         ServiceMode serviceMode = _playerService.getMode();
 
-        if (serviceMode == ServiceMode.Stopped || (_forceRestartIfDifferentTrack && !isTrackPlaying()))
+        if (shouldRestart(serviceMode))
         {
-            _playerService.setTracks(_tracks);
-            _playerService.setCurrentTrack(_currentTrack);
-            stopTrackingTime();
-            _playerService.startPlayback();
-            _forceRestartIfDifferentTrack = false;
+            startPlayingCurrentTrackFromBeginning();
         }
-        else if (serviceMode == ServiceMode.Playing || serviceMode == ServiceMode.Paused)
+        else if (isPlayerServicePlayingOrPaused(serviceMode))
         {
-            _currentTimeUpdater.run();
-            _duration = _playerService.getDuration();
-            updateDuration(_duration);
+            continuePlayingCurrentTrack();
         }
         _isPlayerServiceBound = true;
+    }
+
+    private boolean isPlayerServicePlayingOrPaused(ServiceMode serviceMode)
+    {
+        return serviceMode == ServiceMode.Playing || serviceMode == ServiceMode.Paused;
+    }
+
+    private void continuePlayingCurrentTrack()
+    {
+        _currentTimeUpdater.run();
+        _duration = _playerService.getDuration();
+        updateDuration(_duration);
+    }
+
+    private void startPlayingCurrentTrackFromBeginning()
+    {
+        _playerService.setTracks(_tracks);
+        _playerService.setCurrentTrack(_currentTrack);
+        stopTrackingTime();
+        _playerService.startPlayback();
+        _forceRestartIfDifferentTrack = false;
+    }
+
+    private boolean shouldRestart(ServiceMode serviceMode)
+    {
+        return serviceMode == ServiceMode.Stopped || (_forceRestartIfDifferentTrack && !isTrackPlaying());
+    }
+
+    private void getPlayerService(PlayerBinder binder)
+    {
+        PlayerBinder playerBinder = binder;
+        _playerService = playerBinder.getService();
     }
 
     private Bundle getIncomingStateBundle(Bundle savedInstanceState)
@@ -342,17 +401,14 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     private void startPlayerService()
     {
         Log.v(LOG_TAG, "startPlayerService");
-        if(_playerService == null)
-        {
-            Log.v(LOG_TAG, "startPlayerService: _playerService == null");
-        }
+
         if(_playerServiceIntent == null)
         {
             Log.v(LOG_TAG, "startPlayerService: _playerServiceIntent == null");
             Context context = getActivity().getApplicationContext();
             _playerServiceIntent = new Intent(context, PlayerService.class);
             _playerServiceIntent.putExtra(PlayerService.RECEIVER_TAG, _playerReceiver);
-            context.bindService(_playerServiceIntent, _playerServiceConnection, context.BIND_AUTO_CREATE);
+            context.bindService(_playerServiceIntent, _playerServiceConnection, Context.BIND_AUTO_CREATE);
             context.startService(_playerServiceIntent);
         }
     }
@@ -360,51 +416,25 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
     private void bindListeners()
     {
         Log.v(LOG_TAG, "bindListeners");
-        _skipBackButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Log.v(LOG_TAG, "_skipBackButton.onClick");
-                skipBack();
-            }
-        });
-        _previousButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Log.v(LOG_TAG, "_previousButton.onClick");
-                goToPreviousTrack();
-            }
-        });
-        _pauseButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Log.v(LOG_TAG, "_pauseButton.onClick");
-                pausePlayback();
-            }
-        });
-        _playButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Log.v(LOG_TAG, "_playButton.onClick");
-                startPlayback();
-            }
-        });
-        _nextButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                Log.v(LOG_TAG, "_nextButton.onClick");
-                goToNextTrack();
-            }
-        });
+
+        bindSkipBackListeners();
+        bindPreviousListeners();
+        bindPauseListeners();
+        bindPlayListeners();
+        bindNextListeners();
+        bindForwardListeners();
+        bindProgressBarListeners();
+    }
+
+    private void bindProgressBarListeners()
+    {
+        Log.v(LOG_TAG, "bindProgressBarListeners");
+        _progressSliderSeekBar.setOnSeekBarChangeListener(this);
+    }
+
+    private void bindForwardListeners()
+    {
+        Log.v(LOG_TAG, "bindForwardListeners");
         _skipForwardButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -414,7 +444,76 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
                 skipForward();
             }
         });
-        _progressSliderSeekBar.setOnSeekBarChangeListener(this);
+    }
+
+    private void bindNextListeners()
+    {
+        Log.v(LOG_TAG, "bindNextListeners");
+        _nextButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Log.v(LOG_TAG, "_nextButton.onClick");
+                goToNextTrack();
+            }
+        });
+    }
+
+    private void bindPlayListeners()
+    {
+        Log.v(LOG_TAG, "bindPlayListeners");
+        _playButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Log.v(LOG_TAG, "_playButton.onClick");
+                startPlayback();
+            }
+        });
+    }
+
+    private void bindPauseListeners()
+    {
+        Log.v(LOG_TAG, "bindPauseListeners");
+        _pauseButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Log.v(LOG_TAG, "_pauseButton.onClick");
+                pausePlayback();
+            }
+        });
+    }
+
+    private void bindPreviousListeners()
+    {
+        Log.v(LOG_TAG, "bindPreviousListeners");
+        _previousButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Log.v(LOG_TAG, "_previousButton.onClick");
+                goToPreviousTrack();
+            }
+        });
+    }
+
+    private void bindSkipBackListeners()
+    {
+        Log.v(LOG_TAG, "bindSkipBackListeners");
+        _skipBackButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                Log.v(LOG_TAG, "_skipBackButton.onClick");
+                skipBack();
+            }
+        });
     }
 
     private void updateDuration(int milliseconds)
@@ -445,13 +544,14 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
 
     private void startTrackingTime()
     {
+        Log.v(LOG_TAG, "startTrackingTime");
         stopTrackingTime();
         _currentTimeUpdater.run();
     }
 
     private void stopTrackingTime()
     {
-        //
+        Log.v(LOG_TAG, "stopTrackingTime");
         _handler.removeCallbacks(_currentTimeUpdater);
     }
 
@@ -461,59 +561,109 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         _tracks = bundle.getParcelableArrayList(getString(R.string.bundle_tracks));
         _currentTrack = bundle.getInt(getString(R.string.bundle_current_track));
         _artistName = bundle.getString(getString(R.string.bundle_artist_name));
-        if (bundle.containsKey(getString(R.string.bundle_duration)))
+        loadDurationFromBundle(bundle);
+        loadPlayPauseButtonStateFromBundle(bundle);
+        loadForceRestartFlagFromBundle(bundle);
+    }
+
+    private void loadPlayPauseButtonStateFromBundle(Bundle bundle)
+    {
+        Log.v(LOG_TAG, "loadPlayPauseButtonStateFromBundle");
+        if (bundle.containsKey(getString(R.string.bundle_play_button_visible)))
         {
-            Log.v(LOG_TAG, "loadStateFromBundle: duration");
-            _duration = bundle.getInt(getString(R.string.bundle_duration));
-            updateDuration(_duration);
+            if (bundle.getBoolean(getString(R.string.bundle_play_button_visible)))
+            {
+                showPlayButton();
+            }
+            else
+            {
+                showPauseButton();
+            }
         }
+    }
+
+    private void loadForceRestartFlagFromBundle(Bundle bundle)
+    {
+        Log.v(LOG_TAG, "loadForceRestartFlagFromBundle");
         if (bundle.containsKey(getString(R.string.bundle_force_restart_if_different_track)))
         {
             _forceRestartIfDifferentTrack = true;
         }
+    }
 
-        // Works great on screen rotate, but throws an exception when the user hits Home and then
-        // clicks this app's icon to return here.  It complains that it can't cast the
-        // ResultReceiver in the bundle to a PlayerReceiver.  WTF?  It definitely *IS* a
-        // PlayerReceiver when onSaveInstanceState stuffs it in there.:)
-        //
-        //if (bundle.containsKey(getString(R.string.player_receiver_tag)))
-        //{
-            //Log.v(LOG_TAG, "loadStateFromBundle: receiver_tag");
-            //_playerReceiver = bundle.getParcelable(getString(R.string.player_receiver_tag));
-        //}
+    private void loadDurationFromBundle(Bundle bundle)
+    {
+        Log.v(LOG_TAG, "loadDurationFromBundle");
+        if (bundle.containsKey(getString(R.string.bundle_duration)))
+        {
+            _duration = bundle.getInt(getString(R.string.bundle_duration));
+            updateDuration(_duration);
+        }
     }
 
     private void processServiceMessage(Bundle resultData)
     {
         Log.v(LOG_TAG, "processServiceMessage");
+
         String messageType = resultData.getString(PlayerReceiver.MESSAGE_TYPE_TAG);
+        if(messageType == null)
+        {
+            return;
+        }
+
         switch (messageType)
         {
             case PlayerReceiver.MESSAGE_DURATION:
-                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_DURATION");
-                _duration = resultData.getInt(PlayerReceiver.MESSAGE_DURATION, 0);
-                updateDuration(_duration);
-                startTrackingTime();
+                processDurationServiceMessage(resultData);
                 break;
             case PlayerReceiver.MESSAGE_PLAYBACK_DONE:
-                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_DONE");
-                updateCurrentPosition(0);
-                stopTrackingTime();
-                showPlayButton();
+                processPlaybackDoneServiceMessage();
                 break;
             case PlayerReceiver.MESSAGE_PLAYBACK_BUFFERING:
-                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_BUFFERING");
-                showBuffering();
+                processPlaybackBufferingServiceMessage();
+                break;
             case PlayerReceiver.MESSAGE_PLAYBACK_STARTED:
-                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_STARTED");
-                hideBuffering();
-                showPauseButton();
+                processPlaybackStartedServiceMessage();
                 break;
             case PlayerReceiver.MESSAGE_PLAYBACK_PAUSED:
-                Log.v(LOG_TAG, "processServiceMessage: MESSAGE_PLAYBACK_PAUSED");
-                showPlayButton();
+                processPlaybackPausedServiceMessage();
+                break;
         }
+    }
+
+    private void processPlaybackPausedServiceMessage()
+    {
+        Log.v(LOG_TAG, "processPlaybackPausedServiceMessage");
+        showPlayButton();
+    }
+
+    private void processPlaybackStartedServiceMessage()
+    {
+        Log.v(LOG_TAG, "processPlaybackStartedServiceMessage");
+        hideBuffering();
+        showPauseButton();
+    }
+
+    private void processPlaybackBufferingServiceMessage()
+    {
+        Log.v(LOG_TAG, "processPlaybackBufferingServiceMessage");
+        showBuffering();
+    }
+
+    private void processPlaybackDoneServiceMessage()
+    {
+        Log.v(LOG_TAG, "processPlaybackDoneServiceMessage");
+        updateCurrentPosition(0);
+        stopTrackingTime();
+        showPlayButton();
+    }
+
+    private void processDurationServiceMessage(Bundle resultData)
+    {
+        Log.v(LOG_TAG, "processDurationServiceMessage");
+        _duration = resultData.getInt(PlayerReceiver.MESSAGE_DURATION, 0);
+        updateDuration(_duration);
+        startTrackingTime();
     }
 
     private void showPauseButton()
@@ -547,7 +697,7 @@ public class PlayerFragment extends DialogFragment implements Receivable, SeekBa
         Log.v(LOG_TAG, "isTrackPlaying");
         boolean isPlaying = false;
         ServiceMode serviceMode = _playerService.getMode();
-        if (serviceMode == ServiceMode.Playing || serviceMode == ServiceMode.Paused)
+        if (isPlayerServicePlayingOrPaused(serviceMode))
         {
             int currentPlayingTrack = _playerService.getCurrentTrackIndex();
             String currentPlayingName = _playerService.getCurrentTrackName();

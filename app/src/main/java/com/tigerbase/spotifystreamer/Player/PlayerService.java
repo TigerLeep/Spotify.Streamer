@@ -1,4 +1,4 @@
-package com.tigerbase.spotifystreamer.Player;
+package com.tigerbase.spotifystreamer.player;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -17,7 +17,7 @@ import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.util.Log;
 
-import com.tigerbase.spotifystreamer.ArtistSearch.ArtistSearchActivity;
+import com.tigerbase.spotifystreamer.artistsearch.ArtistSearchActivity;
 import com.tigerbase.spotifystreamer.R;
 import com.tigerbase.spotifystreamer.Track;
 
@@ -62,14 +62,10 @@ public class PlayerService
         Log.v(LOG_TAG, "onCreate");
 
         initializeWifiLock();
-
         _audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
         _notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
         initializeMediaPlayerIfNeeded();
-
         _audioFocus = AudioFocus.NotFocused;
-
     }
 
     @Override
@@ -89,6 +85,7 @@ public class PlayerService
     public void onAudioFocusChange(int focusChange)
     {
         Log.v(LOG_TAG, "onAudioFocusChange");
+
         switch (focusChange)
         {
             case AudioManager.AUDIOFOCUS_LOSS:
@@ -108,6 +105,7 @@ public class PlayerService
     public void onCompletion(MediaPlayer mp)
     {
         Log.v(LOG_TAG, "onCompletion");
+
         announcePlaybackDone();
         releaseAllResources();
 
@@ -117,6 +115,7 @@ public class PlayerService
     public boolean onError(MediaPlayer mp, int what, int extra)
     {
         Log.v(LOG_TAG, "onError");
+
         return false;
     }
 
@@ -124,6 +123,7 @@ public class PlayerService
     public void onPrepared(MediaPlayer mp)
     {
         Log.v(LOG_TAG, "onPrepared");
+
         _serviceMode = ServiceMode.Playing;
         updateExistingNotification(_tracks.get(_currentTrack).Name + " (Playing)");
         configureAndStartMediaPlayer();
@@ -135,6 +135,7 @@ public class PlayerService
     public IBinder onBind(Intent intent)
     {
         Log.v(LOG_TAG, "onBind");
+
         return _playerBinder;
     }
 
@@ -142,6 +143,7 @@ public class PlayerService
     public boolean onUnbind(Intent intent)
     {
         Log.v(LOG_TAG, "onUnbind");
+
         super.onUnbind(intent);
         releaseAllResources();
 
@@ -152,24 +154,28 @@ public class PlayerService
     public void onDestroy()
     {
         Log.v(LOG_TAG, "onDestroy");
+
         releaseAllResources();
     }
 
     public void setTracks(ArrayList<Track> tracks)
     {
         Log.v(LOG_TAG, "setTracks");
+
         _tracks = tracks;
     }
 
     public ArrayList<Track> getTracks()
     {
         Log.v(LOG_TAG, "getTracks");
+
         return _tracks;
     }
 
     private void initializeWifiLock()
     {
         Log.v(LOG_TAG, "initializeWifiLock");
+
         WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
         _wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL, WIFI_LOCK_TAG);
     }
@@ -177,28 +183,35 @@ public class PlayerService
     private void initializeMediaPlayerIfNeeded()
     {
         Log.v(LOG_TAG, "initializeMediaPlayerIfNeeded");
+
         if (_mediaPlayer == null)
         {
-            Log.v(LOG_TAG, "initializeMediaPlayerIfNeeded: mediaPlayer == null");
-            _mediaPlayer = new MediaPlayer();
-
-            _mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-            _mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-
-            _mediaPlayer.setOnPreparedListener(this);
-            _mediaPlayer.setOnCompletionListener(this);
-            _mediaPlayer.setOnErrorListener(this);
+            _mediaPlayer = createAndInitializeNewMediaPlayer();
         }
         else
         {
-            Log.v(LOG_TAG, "initializeMediaPlayerIfNeeded: mediaPlayer != null");
             _mediaPlayer.reset();
         }
+    }
+
+    private MediaPlayer createAndInitializeNewMediaPlayer()
+    {
+        Log.v(LOG_TAG, "createAndInitializeNewMediaPlayer");
+
+        MediaPlayer mediaPlayer = new MediaPlayer();
+        mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnCompletionListener(this);
+        mediaPlayer.setOnErrorListener(this);
+
+        return mediaPlayer;
     }
 
     private void requestAudioFocus()
     {
         Log.v(LOG_TAG, "requestAudioFocus");
+
         if (_audioFocus != AudioFocus.Focused)
         {
             int status = _audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
@@ -212,6 +225,7 @@ public class PlayerService
     private void releaseAudioFocus()
     {
         Log.v(LOG_TAG, "releaseAudioFocus");
+
         if (_audioFocus == AudioFocus.Focused)
         {
             int status = _audioManager.abandonAudioFocus(this);
@@ -225,47 +239,77 @@ public class PlayerService
     public void startPlayback()
     {
         Log.v(LOG_TAG, "startPlayback");
+
         switch (_serviceMode)
         {
             case Paused:
-                requestAudioFocus();
-                _serviceMode = ServiceMode.Playing;
-                bringServiceToForeground(getPlayingNotificationMessage());
-                configureAndStartMediaPlayer();
-                announcePlaybackStarted();
+                resumePlayback();
                 break;
             case Stopped:
             case Playing:
-                stopPlayback();
-                requestAudioFocus();
-                releaseAllResourcesExceptMediaPlayer();
-                try
-                {
-                    initializeMediaPlayerIfNeeded();
-                    Track track = _tracks.get(getCurrentTrackIndex());
-                    if(track != null)
-                    {
-                        _mediaPlayer.setDataSource(track.PreviewUrl);
-                        _currentTrackName = track.Name;
-                    }
-                    _serviceMode = ServiceMode.Buffering;
-                    bringServiceToForeground(getBufferingNotificationMessage());
-                    _mediaPlayer.prepareAsync();
-                    announcePlaybackBuffering();
-                    _wifiLock.acquire();
-                }
-                catch (IOException ex)
-                {
-                    Log.e(LOG_TAG, ex.getMessage());
-                    ex.printStackTrace();
-                }
+                startPlaybackFromBeginning();
                 break;
         }
+    }
+
+    private void startPlaybackFromBeginning()
+    {
+        Log.v(LOG_TAG, "startPlaybackFromBeginning");
+
+        stopPlayback();
+        requestAudioFocus();
+        releaseAllResourcesExceptMediaPlayer();
+        try
+        {
+            initializeMediaPlayerIfNeeded();
+            loadCurrentTrackInMediaPlayer();
+            startMediaPlayerBuffering();
+        }
+        catch (IOException ex)
+        {
+            Log.e(LOG_TAG, ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void startMediaPlayerBuffering()
+    {
+        Log.v(LOG_TAG, "startMediaPlayerBuffering");
+
+        _serviceMode = ServiceMode.Buffering;
+        bringServiceToForeground(getBufferingNotificationMessage());
+        _mediaPlayer.prepareAsync();
+        announcePlaybackBuffering();
+        _wifiLock.acquire();
+    }
+
+    private void loadCurrentTrackInMediaPlayer() throws IOException
+    {
+        Log.v(LOG_TAG, "loadCurrentTrackInMediaPlayer");
+
+        Track track = _tracks.get(getCurrentTrackIndex());
+        if(track != null && track.PreviewUrl != null)
+        {
+            _mediaPlayer.setDataSource(track.PreviewUrl);
+            _currentTrackName = track.Name;
+        }
+    }
+
+    private void resumePlayback()
+    {
+        Log.v(LOG_TAG, "resumePlayback");
+
+        requestAudioFocus();
+        _serviceMode = ServiceMode.Playing;
+        bringServiceToForeground(getPlayingNotificationMessage());
+        configureAndStartMediaPlayer();
+        announcePlaybackStarted();
     }
 
     public void pausePlayback()
     {
         Log.v(LOG_TAG, "pausePlayback");
+
         if (_serviceMode == ServiceMode.Playing)
         {
             _serviceMode = ServiceMode.Paused;
@@ -278,19 +322,22 @@ public class PlayerService
     public void duckPlayback()
     {
         Log.v(LOG_TAG, "duckPlayback");
+
         setVolumeToLow();
     }
 
     public void unduckPlayback()
     {
         Log.v(LOG_TAG, "unduckPlayback");
+
         setVolumeToFull();
     }
 
     public void stopPlayback()
     {
         Log.v(LOG_TAG, "stopPlayback");
-        if(_serviceMode == ServiceMode.Playing || _serviceMode == ServiceMode.Paused)
+
+        if(isMediaPlayerPlayingOrPaused())
         {
             releaseAllResources();
             releaseAudioFocus();
@@ -298,9 +345,17 @@ public class PlayerService
         }
     }
 
+    private boolean isMediaPlayerPlayingOrPaused()
+    {
+        Log.v(LOG_TAG, "isMediaPlayerPlayingOrPaused");
+
+        return _serviceMode == ServiceMode.Playing || _serviceMode == ServiceMode.Paused;
+    }
+
     public void previousTrack()
     {
         Log.v(LOG_TAG, "previousTrack");
+
         if(_serviceMode == ServiceMode.Buffering)
         {
             return;
@@ -309,12 +364,14 @@ public class PlayerService
         {
             _currentTrack--;
         }
+        stopPlayback();
         startPlayback();
     }
 
     public void nextTrack()
     {
         Log.v(LOG_TAG, "nextTrack");
+
         if(_serviceMode == ServiceMode.Buffering)
         {
             return;
@@ -323,50 +380,54 @@ public class PlayerService
         {
             _currentTrack++;
         }
+        stopPlayback();
         startPlayback();
     }
 
     public void skipBack()
     {
         Log.v(LOG_TAG, "skipBack");
+
         if(_serviceMode == ServiceMode.Buffering)
         {
             return;
         }
         if (_mediaPlayer != null)
         {
-            int position = _mediaPlayer.getCurrentPosition();
-            position -= 5000;
-            if (position < 0)
-            {
-                position = 0;
-            }
-            _mediaPlayer.seekTo(position);
+            skipMediaPlayerMilliseconds(-5000);
         }
     }
 
     public void skipForward()
     {
         Log.v(LOG_TAG, "skipForward");
+
         if(_serviceMode == ServiceMode.Buffering)
         {
             return;
         }
         if (_mediaPlayer != null)
         {
-            int position = _mediaPlayer.getCurrentPosition();
-            int duration = _mediaPlayer.getDuration();
-            position += 5000;
-            if (position > duration)
-            {
-                position = duration - 1000;
-            }
-            if (position < 0)
-            {
-                position = 0;
-            }
-            _mediaPlayer.seekTo(position);
+            skipMediaPlayerMilliseconds(5000);
         }
+    }
+
+    private void skipMediaPlayerMilliseconds(int milliseconds)
+    {
+        Log.v(LOG_TAG, "skipMilliseconds");
+
+        int position = _mediaPlayer.getCurrentPosition();
+        int duration = _mediaPlayer.getDuration();
+        position += milliseconds;
+        if (position > duration)
+        {
+            position = duration - 1000;
+        }
+        if (position < 0)
+        {
+            position = 0;
+        }
+        _mediaPlayer.seekTo(position);
     }
 
     private void releaseAllResources()
@@ -556,6 +617,7 @@ public class PlayerService
 
     public String getCurrentTrackName()
     {
+        Log.v(LOG_TAG, "getCurrentTrackName");
         return _currentTrackName;
     }
 
@@ -579,6 +641,7 @@ public class PlayerService
 
     public int getDuration()
     {
+        Log.v(LOG_TAG, "getDuration");
         return _mediaPlayer.getDuration();
     }
 

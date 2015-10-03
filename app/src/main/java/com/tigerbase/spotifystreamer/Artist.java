@@ -18,13 +18,6 @@ public class Artist implements Parcelable
     {
     }
 
-    public Artist(String id, String name, String thumbnailImageUrl)
-    {
-        Id = id;
-        Name = name;
-        ThumbnailImageUrl = thumbnailImageUrl;
-    }
-
     public Artist(kaaes.spotify.webapi.android.models.Artist artist)
     {
         Id = artist.id;
@@ -76,7 +69,7 @@ public class Artist implements Parcelable
         Image thumbnailImage = null;
         for (Image image : artist.images)
         {
-            if (thumbnailImage == null || image.width >= 200 && image.width < thumbnailImage.width)
+            if (thumbnailImage == null || (image.width >= 200 && image.width < thumbnailImage.width))
             {
                 thumbnailImage = image;
             }

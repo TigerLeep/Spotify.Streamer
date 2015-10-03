@@ -13,7 +13,7 @@
         android:theme="@style/AppTheme"
         >
         <activity
-            android:name=".ArtistSearch.ArtistSearchActivity"
+            android:name=".artistsearch.ArtistSearchActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             >
@@ -23,27 +23,27 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ArtistTop10.ArtistTop10Activity"
+            android:name=".artisttop10.ArtistTop10Activity"
             android:label="@string/top_tracks_name"
-            android:parentActivityName=".ArtistSearch.ArtistSearchActivity"
+            android:parentActivityName=".artistsearch.ArtistSearchActivity"
             android:launchMode="singleTop"
             >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ArtistSearch.ArtistSearchActivity" />
+                android:value=".artistsearch.ArtistSearchActivity" />
         </activity>
         <activity
-            android:name=".Player.PlayerActivity"
+            android:name=".player.PlayerActivity"
             android:label="@string/player_name"
-            android:parentActivityName=".ArtistTop10.ArtistTop10Activity"
+            android:parentActivityName=".artisttop10.ArtistTop10Activity"
             android:launchMode="singleTop"
             >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ArtistTop10.ArtistTop10Activity" />
+                android:value=".artisttop10.ArtistTop10Activity" />
         </activity>
         <service
-            android:name=".Player.PlayerService"
+            android:name=".player.PlayerService"
             android:exported="false"
             android:stopWithTask="true">
             <intent-filter>
